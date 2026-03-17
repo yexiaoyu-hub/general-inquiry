@@ -3,17 +3,15 @@
     <el-aside class="aside-container" width="200px">
       <div class="el-aside__logo"></div>
       <el-menu
-        active-text-color="#ffd04b"
-        background-color="#232323"
         :default-active="$route.path"
         text-color="#fff"
         router
       >
-        <el-menu-item index="/Acticle/Manage">
+        <el-menu-item index="/content/query">
           <el-icon><Management /></el-icon>
           <span>药品查询</span>
         </el-menu-item>
-        <el-menu-item index="/Acticle/Channel">
+        <el-menu-item index="/content/collect">
           <el-icon><Promotion /></el-icon>
           <span>我的收藏</span>
         </el-menu-item>
@@ -21,7 +19,7 @@
           <el-icon><Promotion /></el-icon>
           <span>个人中心</span>
         </el-menu-item>
-        <el-menu-item index="/Acticle/Channel">
+        <el-menu-item index="/content/manage">
           <el-icon><Promotion /></el-icon>
           <span>药品管理</span>
         </el-menu-item>
@@ -68,14 +66,27 @@
 .layout-container {
   height: 100vh;
   .el-aside {
-    background-color: #232323;
+    background: linear-gradient(to bottom, #56C8EC, #40E0D0);
+    background: linear-gradient(180deg, #56C8EC 0%, #48D1CC 100%);
+    border-radius: 10px;
     &__logo {
-      height: 120px;
+      height: 100px;
       background: url('@/assets/logo/yao-logo.png') no-repeat center / 240px auto;
     }
     .el-menu {
       border-right: none;
+      background-color: transparent !important;
+      span{
+        font-size: 18px;
+      }
     }
+  }
+  //激活态样式
+  :deep(.el-menu-item.is-active) {
+    color: #0075E1; /* 激活态文字色 */
+    background-color: rgba(255, 255, 255, 0.1); /* 轻微背景遮罩 */
+    font-weight: 600;
+    border-left: 5px solid #0075E1;
   }
   .el-header {
     background-color: #fff;

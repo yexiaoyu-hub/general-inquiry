@@ -19,7 +19,6 @@ const scrollToTop = () => {
 // 药品查询点击跳转
 const router = useRouter()
 const handleDrugClick = () => {
-  console.log('跳转到药品查询页面')
   router.push('/content/query')
 }
 </script>
