@@ -105,7 +105,7 @@ const handleDrugClick = () => {
 
     <!-- 底部版权 -->
     <footer class="footer">
-      <p>© 本平台查询信息仅供参考，如有侵权请联系我们</p>
+      <p>峰思维 ©2026 如发现不良信息、有害信息请联系我们进行举报</p>
     </footer>
   </div>
 </template>

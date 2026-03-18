@@ -12,6 +12,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    // 自动导入element-plus组件
     AutoImport({
       resolvers: [ElementPlusResolver()],
     }),

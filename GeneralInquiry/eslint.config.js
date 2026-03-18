@@ -28,3 +28,12 @@ export default defineConfig([
 
   skipFormatting,
 ])
+
+//声明全局变量名
+module.exports = {
+  globals: {
+    ElMessage: 'readonly',
+    ElMessageBox: 'readonly',
+    ElLoading: 'readonly'
+  }
+}
