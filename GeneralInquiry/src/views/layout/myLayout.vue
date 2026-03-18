@@ -80,7 +80,7 @@ const userinfo = ref({
           </span>
           <!-- 折叠部分 -->
           <template #dropdown>
-            <el-dropdown-menu >
+            <!-- <el-dropdown-menu >
               <el-dropdown-item command="collect" :icon="StarFilled"
                 >我的收藏</el-dropdown-item
               >
@@ -90,7 +90,9 @@ const userinfo = ref({
               <el-dropdown-item command="logout" :icon="SwitchButton"
                 >退出登录</el-dropdown-item
               >
-            </el-dropdown-menu>
+            </el-dropdown-menu> -->
+            <div style="width:100px;height:150px;background-color: #000;">
+            </div>
           </template>
         </el-dropdown>
       </el-header>
@@ -109,6 +111,7 @@ const userinfo = ref({
     background: linear-gradient(to bottom, #56C8EC, #40E0D0);
     background: linear-gradient(180deg, #56C8EC 0%, #48D1CC 100%);
     border-radius: 10px;
+    position: relative;
     &__logo {
       height: 100px;
       background: url('@/assets/logo/yao-logo.png') no-repeat center / 240px auto;
@@ -122,7 +125,8 @@ const userinfo = ref({
       }
     }
     .el-aside-footer {
-      margin-top: 500px;
+      position: absolute;
+      bottom: 20px;
       font-size: 20px;
       font-weight: 600;
       color: #fff;
