@@ -33,6 +33,7 @@ const handleHomeClick = () => {
 //用户数据显示
 const userinfo = ref({
   name: "张三",
+  phone: "18312345688",
 })
 
 </script>
@@ -74,24 +75,35 @@ const userinfo = ref({
         <el-dropdown placement="bottom-end" @command="handleCommand">
         <!-- 默认部分 -->         
           <span class="el-dropdown__box">
-            <span class="user-name">{{userinfo.name}}</span>
             <el-avatar src="" />
             <el-icon><CaretBottom /></el-icon>
           </span>
           <!-- 折叠部分 -->
           <template #dropdown>
-            <!-- <el-dropdown-menu >
-              <el-dropdown-item command="collect" :icon="StarFilled"
-                >我的收藏</el-dropdown-item
-              >
-              <el-dropdown-item command="avatar" :icon="User"
-                >个人中心</el-dropdown-item
-              >
-              <el-dropdown-item command="logout" :icon="SwitchButton"
-                >退出登录</el-dropdown-item
-              >
-            </el-dropdown-menu> -->
-            <div style="width:100px;height:150px;background-color: #000;">
+            <div class="user-dropdown-card">
+              <!-- 顶部用户信息区域 -->
+              <div class="user-info-header">
+                <el-avatar :size="50" src="" class="user-avatar" />
+                <div class="user-details">
+                  <div class="user-name-dropdown">{{userinfo.name}}</div>
+                  <div class="user-phone">{{userinfo.phone}}</div>
+                </div>
+              </div>
+              <!-- 底部菜单区域 -->
+              <div class="user-menu-body">
+                <div class="menu-item" @click="handleCommand('collect')">
+                  <el-icon class="menu-icon"><StarFilled /></el-icon>
+                  <span>我的收藏</span>
+                </div>
+                <div class="menu-item" @click="handleCommand('avatar')">
+                  <el-icon class="menu-icon"><User /></el-icon>
+                  <span>个人中心</span>
+                </div>
+                <div class="menu-item" @click="handleCommand('logout')">
+                  <el-icon class="menu-icon"><SwitchButton /></el-icon>
+                  <span>退出登录</span>
+                </div>
+              </div>
             </div>
           </template>
         </el-dropdown>
@@ -154,12 +166,6 @@ const userinfo = ref({
     .el-dropdown__box {
       display: flex;
       align-items: center;
-      .user-name {
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
-        margin-right: 10px;
-      }
       .el-icon {
         color: #999;
         margin-left: 10px;
@@ -176,6 +182,60 @@ const userinfo = ref({
     justify-content: center;
     font-size: 14px;
     color: #666;
+    height: 30px;
+  }
+}
+// 用户下拉卡片样式
+.user-dropdown-card {
+  width: 220px;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  .user-info-header {
+    background: linear-gradient(135deg, #a8edea 0%, #7ee8fa 100%);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    .user-avatar {
+      border: 2px solid #fff;
+      flex-shrink: 0;
+    }
+    .user-details {
+      .user-name-dropdown {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      .user-phone {
+        font-size: 13px;
+        color: #666;
+      }
+    }
+  }
+  .user-menu-body {
+    padding: 10px 0;
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      &:hover {
+        background-color: #f5f7fa;
+      }
+      .menu-icon {
+        font-size: 18px;
+        color: #909399;
+        margin-right: 12px;
+      }
+      span {
+        font-size: 14px;
+        color: #606266;
+      }
+    }
   }
 }
 </style>
