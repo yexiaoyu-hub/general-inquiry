@@ -11,6 +11,7 @@ const router = createRouter({
       children: [
         {path: 'content/query', name: 'query', component: () => import('@/views/content/queryPage.vue')},
         {path: 'content/collect', name: 'collect', component: () => import('@/views/content/collectPage.vue')},
+        {path: 'content/user', name: 'userInfo', component: () => import('@/views/content/userInfo.vue')},
         {path: 'content/manage', name: 'manage', component: () => import('@/views/content/managePage.vue')},
       ]
     },

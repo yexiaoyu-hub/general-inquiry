@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Search, ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import elSelect from './components/elselect.vue'
+import infoCard from './components/infoCard.vue'
 
 // 搜索关键词
 const searchKeyword = ref('')
@@ -61,7 +62,9 @@ const tableData = ref([
 // 收藏列表
 const favorites = ref([])
 
-// 切换分类
+const drawerVisible = ref(false)
+const currentDrug = ref({})
+
 const handleCategoryChange = (value) => {
   activeCategory.value = value
 }
@@ -90,6 +93,19 @@ const toggleFavorite = (row) => {
 // 判断是否已收藏
 const isFavorite = (ENC) => {
   return favorites.value.includes(ENC)
+}
+
+const handleRowClick = (row) => {
+  currentDrug.value = {
+    ...row,
+    isFavorite: isFavorite(row.ENC)
+  }
+  drawerVisible.value = true
+}
+
+const handleToggleFavorite = (drug) => {
+  toggleFavorite(drug)
+  currentDrug.value.isFavorite = isFavorite(drug.ENC)
 }
 </script>
 
@@ -127,7 +143,7 @@ const isFavorite = (ENC) => {
         </el-button>
       </div> 
       <!-- 数据表格 -->  
-      <el-table :data="tableData" style="width: 100%" class="drug-table">
+      <el-table :data="tableData" style="width: 100%" class="drug-table" @row-click="handleRowClick">
         <el-table-column label="药品名称" min-width="200">
           <template #default="{ row }">
             <div class="drug-info">
@@ -156,7 +172,7 @@ const isFavorite = (ENC) => {
           <template #default="{ row }">
             <el-icon
               :class="['favorite-icon', { active: isFavorite(row.ENC) }]"
-              @click="toggleFavorite(row)"
+              @click.stop="toggleFavorite(row)"
             >
               <StarFilled v-if="isFavorite(row.ENC)" />
               <Star v-else />
@@ -165,6 +181,12 @@ const isFavorite = (ENC) => {
         </el-table-column>
       </el-table>
     </div>
+
+    <infoCard
+      v-model:visible="drawerVisible"
+      :drug-data="currentDrug"
+      @toggle-favorite="handleToggleFavorite"
+    />
   </div>
 </template>
 
@@ -285,6 +307,15 @@ const isFavorite = (ENC) => {
         color: #666;
         font-weight: 500;
         font-size: 14px;
+      }
+    }
+
+    :deep(.el-table__body-wrapper) {
+      .el-table__row {
+        cursor: pointer;
+        &:hover > td {
+          background-color: #f0f9ff !important;
+        }
       }
     }
 

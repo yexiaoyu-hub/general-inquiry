@@ -55,7 +55,7 @@ const userinfo = ref({
           <el-icon><StarFilled /></el-icon>
           <span>我的收藏</span>
         </el-menu-item>
-        <el-menu-item index="/Acticle/Channel">
+        <el-menu-item index="/content/user">
           <el-icon><User /></el-icon>
           <span>个人中心</span>
         </el-menu-item>
@@ -95,7 +95,7 @@ const userinfo = ref({
                   <el-icon class="menu-icon"><StarFilled /></el-icon>
                   <span>我的收藏</span>
                 </div>
-                <div class="menu-item" @click="handleCommand('avatar')">
+                <div class="menu-item" @click="handleCommand('user')">
                   <el-icon class="menu-icon"><User /></el-icon>
                   <span>个人中心</span>
                 </div>

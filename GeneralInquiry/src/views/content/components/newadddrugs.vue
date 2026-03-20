@@ -1,16 +1,37 @@
 <script setup>
-import { ref } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { ref, watch } from 'vue'
+import { Plus, CirclePlus } from '@element-plus/icons-vue'
 
 // 定义 props
 const props = defineProps({
   visible: {
     type: Boolean,
     default: false
+  },
+  editData: {
+    type: Object,
+    default: () => null
   }
 })
-// 表单引用
-const formRef = ref(null)
+
+const formRef = ref(null)  // 表单引用
+const drugRef = ref(null)  // 药品信息引用
+const drugInfoData = ref([])  // 药品信息数据
+
+// 添加药品信息
+const handleAdd = () => {
+  drugInfoData.value.push({
+    manufacturer: '',
+    productionAddress: '',
+    approvalNumber: '',
+    drugCode: '',
+    specification: '',
+    shelfLife: '',
+    packageMaterial: ''
+  })
+  // 重置药品信息表单
+  drugRef.value?.resetFields()
+}
 
 
 
@@ -31,8 +52,32 @@ const formData = ref({
   mainEffects: '',
   contraindications: '',
   adverseReactions: '',
+  drugCategory: [],
   image: ''
 })
+
+// 监听编辑数据变化，回显到表单
+watch(() => props.editData, (newVal) => {
+  if (newVal && props.visible) {
+    formData.value = {
+      drugName: newVal.drugName || '',
+      genericName: newVal.genericName || '',
+      dosage: newVal.dosage || '',
+      dosageForm: newVal.dosageForm || '颗粒剂',
+      character: newVal.character || '',
+      ingredients: newVal.ingredients || '',
+      medicationType: newVal.medicationType || '非处方药',
+      category: newVal.category || '西药',
+      indications: newVal.indications || '',
+      mainEffects: newVal.mainEffects || '',
+      contraindications: newVal.contraindications || '',
+      adverseReactions: newVal.adverseReactions || '',
+      drugCategory: newVal.drugCategory || [],
+      image: newVal.image || ''
+    }
+    drugInfoData.value = newVal.drugInfo || []
+  }
+}, { immediate: true })
 
 // 剂型选项
 const dosageFormOptions = [
@@ -44,13 +89,11 @@ const dosageFormOptions = [
   { label: '软膏', value: '软膏' },
   { label: '喷雾剂', value: '喷雾剂' }
 ]
-
 // 用药类型选项
 const medicationTypeOptions = [
   { label: '非处方药', value: '非处方药' },
   { label: '处方药', value: '处方药' }
 ]
-
 // 分类选项
 const categoryOptions = [
   { label: '西药', value: '西药' },
@@ -58,21 +101,34 @@ const categoryOptions = [
   { label: '中草药', value: '中草药' },
   { label: '自制剂', value: '自制剂' }
 ]
+//包装材质选项
+const packageMaterialOptions = [
+  { label: '塑料', value: '塑料' },
+  { label: '玻璃', value: '玻璃' },
+  { label: '金属', value: '金属' },
+  { label: '纸类/复合膜', value: '纸类/复合膜' },
+  { label: '其他', value: '其他' }
+]
+//药品类别选项
+const drugCategoryOptions = [
+  { label: '抗感染类', value: '抗感染类' },
+  { label: '心血管系统类', value: '心血管系统类' },
+  { label: '消化系统类', value: '消化系统类' }, 
+  { label: '呼吸系统类', value: '呼吸系统类' } ,
+  { label: '神经系统类', value: '神经系统类' }, 
+  { label: '内分泌及代谢类', value: '内分泌及代谢类' },
+  { label: '泌尿系统类', value: '泌尿系统类' }, 
+  { label: '血液系统类', value: '血液系统类' }, 
+  { label: '抗肿瘤类', value: '抗肿瘤类' },
+  { label: '维生素/营养类', value: '维生素/营养类' },
+  { label: '外用药', value: '外用药' },
+  { label: '麻醉/精神类', value: '麻醉/精神类' }
+]
 
 // 关闭弹窗
 const handleClose = () => {
   emit('update:visible', false)
   emit('cancel')
-}
-
-// 提交表单
-const handleSubmit = () => {
-  emit('submit', formData.value)
-  emit('update:visible', false)
-}
-
-// 重置表单
-const handleReset = () => {
   formData.value = {
     drugName: '',
     genericName: '',
@@ -86,9 +142,46 @@ const handleReset = () => {
     mainEffects: '',
     contraindications: '',
     adverseReactions: '',
+    drugCategory: [],
+    image: ''
+  }
+  drugInfoData.value = []
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  // 校验基本信息
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  
+  // 校验药品信息
+  if (!validateDrugInfo()) return
+  
+  emit('submit', { ...formData.value, drugInfo: drugInfoData.value })
+  emit('update:visible', false)
+}
+
+// 重置表单
+const handleResetinfo = () => {
+  formData.value = {
+    drugName: '',
+    genericName: '',
+    dosage: '',
+    dosageForm: '颗粒剂',
+    character: '',
+    ingredients: '',
+    medicationType: '非处方药',
+    category: '西药',
+    indications: '',
+    mainEffects: '',
+    contraindications: '',
+    adverseReactions: '',
+    drugCategory: [],
     image: ''
   }
   formRef.value?.resetFields()
+  drugRef.value?.resetFields()
+  drugInfoData.value = []
 }
 
 // 图片上传前的处理
@@ -96,7 +189,6 @@ const beforeImageUpload = (file) => {
   const isJPG = file.type === 'image/jpeg'
   const isPNG = file.type === 'image/png'
   const isLt2M = file.size / 1024 / 1024 < 2
-
   if (!isJPG && !isPNG) {
     ElMessage.error('上传图片只能是 JPG 或 PNG 格式!')
     return false
@@ -107,7 +199,6 @@ const beforeImageUpload = (file) => {
   }
   return true
 }
-
 // 图片上传成功
 const handleImageSuccess = (response) => {
   formData.value.image = response.url
@@ -119,13 +210,40 @@ const rules = ref({
   drugName: [{ required: true, message: '请输入药品名称', trigger: 'blur' }],
 })
 
+// 药品信息校验函数
+const validateDrugInfo = () => {
+  if (drugInfoData.value.length === 0) {
+    ElMessage.warning('请至少添加一条药品信息')
+    return false
+  }
+  for (let i = 0; i < drugInfoData.value.length; i++) {
+    const item = drugInfoData.value[i]
+    if (!item.manufacturer || !item.manufacturer.trim()) {
+      ElMessage.error(`第 ${i + 1} 行的厂家不能为空`)
+      return false
+    }
+    if (!item.approvalNumber || !item.approvalNumber.trim()) {
+      ElMessage.error(`第 ${i + 1} 行的批准文号不能为空`)
+      return false
+    }
+  }
+  return true
+}
+
+
+
+// 删除药品信息
+const handleDelete = (row, index) => {
+  drugInfoData.value.splice(index, 1)
+}
+  
 </script>
 
 <template>
   <el-dialog
     :model-value="visible"
     @update:model-value="emit('update:visible', $event)"
-    title="新增"
+    :title="editRowData?.drugName ? '编辑' : '新增'"  
     width="70%"
     :close-on-click-modal="false"
     class="drug-dialog"
@@ -243,7 +361,16 @@ const rules = ref({
 
         <!-- 第六行 - 图片上传 -->
         <el-row :gutter="20">
-          <el-col :span="24">
+          <el-col :span="12">
+            <el-form-item label="药品类别:" prop="drugCategory">
+              <el-checkbox-group v-model="formData.drugCategory" v-for="value in drugCategoryOptions" :key="value.value">
+                <el-checkbox :value="value.value" name="value.label">
+                  {{ value.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="图片:" prop="image">
               <el-upload
                 class="image-uploader"
@@ -263,13 +390,79 @@ const rules = ref({
           </el-col>
         </el-row>
       </el-form>
+      <!-- 药品信息标题 -->
+      <div class="section-title">
+        <span class="title-icon">|</span>
+        <span class="title-text">药品信息</span>
+      </div>
+      <el-button type="primary" class="add-btn" @click="handleAdd" round>
+        <el-icon><CirclePlus /></el-icon>
+        添加药品信息
+      </el-button>
+      <!-- 药品信息列表 -->
+      <div class="drug-info-container">
+        <el-table :data="drugInfoData" class="collect-table">
+          <el-table-column label="厂家" align="left" prop="manufacturer">
+              <template #header>
+                <span>厂家 <span style="color: red; margin-left: 2px;">*</span></span>
+              </template>
+              <template #default="{ row }">
+                <el-input v-model="row.manufacturer" />
+              </template>
+            </el-table-column>
+            <el-table-column label="生产地址" align="center" prop="productionAddress">
+              <template #default="{ row }">
+                <el-input v-model="row.productionAddress" />
+              </template>
+            </el-table-column>
+            <el-table-column label="批准文号" align="center" prop="approvalNumber">
+              <template #header>
+                <span>批准文号 <span style="color: red; margin-left: 2px;">*</span></span>
+              </template>
+              <template #default="{ row }">
+                <el-input v-model="row.approvalNumber" />  
+              </template>
+            </el-table-column>
+            <el-table-column label="药品编码" align="center" prop="drugCode">
+              <template #default="{ row }">
+                <el-input v-model="row.drugCode" type="number" />  
+              </template>
+            </el-table-column>
+            <el-table-column label="规格" align="center" prop="specification">
+              <template #default="{ row }">
+                <el-input v-model="row.specification" />  
+              </template>
+            </el-table-column>
+            <el-table-column label="保质期" align="center" prop="shelfLife">
+              <template #default="{ row }">
+                <el-input v-model="row.shelfLife" />  
+              </template>
+            </el-table-column>
+            <el-table-column label="包装材质" align="center" prop="packageMaterial">
+              <template #default="{ row }">
+                <el-select v-model="row.packageMaterial" placeholder="请选择" style="width: 100%">
+                  <el-option
+                    v-for="item in packageMaterialOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select> 
+              </template>
+            </el-table-column>
+            <el-table-column align="center" label="操作" width="60">
+              <template #default="{ row, $index }">
+                <el-button type="danger" link @click="handleDelete(row, $index)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+      </div>
     </div>
-
     <!-- 底部按钮 -->
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button @click="handleReset">重置</el-button>
+        <el-button @click="handleResetinfo">重置</el-button>
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </div>
     </template>
@@ -316,6 +509,11 @@ const rules = ref({
       color: #1E98D7;
     }
   }
+  .add-btn {
+    background-color: transparent;
+    color: #1E98D7;
+    border: none;
+  }
 }
 
 .drug-form {
@@ -336,7 +534,11 @@ const rules = ref({
     border-radius: 4px;
   }
 }
-
+:deep(.el-checkbox-group) {
+  display: flex;
+  flex-wrap: wrap;
+  padding-right: 10px;
+}
 .image-uploader {
   .upload-placeholder {
     width: 120px;

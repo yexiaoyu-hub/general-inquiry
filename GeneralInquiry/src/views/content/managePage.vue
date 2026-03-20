@@ -2,21 +2,19 @@
 import { ref } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import NewAddDrugs from './components/newadddrugs.vue'
+
+// 表格数据
+const tableData = ref([
+  {
+    drugName:'测试数据'
+  }
+])
+
 // 新增药品弹窗
 const newAddDrugsVisible = ref(false)
-// 新增药品弹窗数据
-const newAddDrugsFormData = ref({
-  drugName:'',
-  genericName:'',
-  dosage:'',
-  dosageForm:'',
-  medicationType:'',
-  manufacturer:'',
-  approvalNumber:'',
-  specification:'',
-  collectTime:'',
-  updateTime:'',
-})
+// 编辑数据
+const editRowData = ref(null)
+
 
 
 // 搜索关键字
@@ -39,6 +37,11 @@ const handleReset = () => {
 }
 // 新增药品
 const handleAdd = () => {
+  newAddDrugsVisible.value = true
+}
+//编辑药品
+const handleEdit = (row) => {
+  editRowData.value = { ...row }
   newAddDrugsVisible.value = true
 }
 
@@ -70,7 +73,7 @@ const handleAdd = () => {
       <!-- 数据表格 -->  
       <div class="table-container">
         <el-table :data="tableData" style="width: 100%" class="collect-table">
-          <el-table-column label="药品名称" min-width="120" prop="name" />
+          <el-table-column label="药品名称" min-width="120" prop="drugName" />
           <el-table-column label="厂家" min-width="180" prop="manufacturer" />
           <el-table-column label="批准文号" min-width="140" prop="approvalNumber" />
           <el-table-column label="药品编码" min-width="140" prop="specification" />
@@ -79,7 +82,7 @@ const handleAdd = () => {
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <div class="operation-btns">
-                <span class="view-btn" @click="handleView(row)">编辑</span>
+                <span class="view-btn" @click="handleEdit(row)">编辑</span>
                 <span class="delete-btn" @click="handleDelete(row)">删除</span>
               </div>
             </template>
@@ -102,6 +105,7 @@ const handleAdd = () => {
     <!-- 新增药品弹窗 -->
     <NewAddDrugs
       v-model:visible="newAddDrugsVisible"
+      :edit-data="editRowData"
       @submit="handleSubmitAdd"
     />
   </div>
@@ -212,7 +216,7 @@ const handleAdd = () => {
       display: flex;
       gap: 15px;
       .view-btn {
-        color: #5ee7df;
+        color: #409EFF;
         cursor: pointer;
         font-size: 14px;
 
