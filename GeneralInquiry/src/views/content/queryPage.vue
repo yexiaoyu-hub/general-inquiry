@@ -1,3 +1,4 @@
+// 药品查询页面
 <script setup>
 import { ref } from 'vue'
 import { Search, ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'

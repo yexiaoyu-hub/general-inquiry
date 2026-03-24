@@ -1,3 +1,4 @@
+// 分类选择组件
 <script setup>
 import { ref } from 'vue'
 

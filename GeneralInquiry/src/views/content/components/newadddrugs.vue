@@ -1,3 +1,4 @@
+// 新增药品组件
 <script setup>
 import { ref, watch } from 'vue'
 import { Plus, CirclePlus } from '@element-plus/icons-vue'

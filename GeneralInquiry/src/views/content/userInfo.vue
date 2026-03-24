@@ -1,3 +1,4 @@
+// 用户信息页面
 <script setup>
 import { ref } from 'vue'
 import { User, Lock, DataLine, Edit, Upload } from '@element-plus/icons-vue'

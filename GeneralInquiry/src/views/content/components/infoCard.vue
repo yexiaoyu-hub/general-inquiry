@@ -1,3 +1,4 @@
+// 药品详情组件
 <script setup>
 import { ref, watch } from 'vue'
 import { Star, StarFilled, CopyDocument } from '@element-plus/icons-vue'
@@ -72,21 +73,51 @@ const handleCopy = (text) => {
           </div>
         </div>
         <div class="info-list">
-          <div class="info-item">
-            <span class="info-label">批准文号</span>
-            <span class="info-value">{{ drugData.approvalNumber }}</span>
+          <div class="info-row">
+            <div class="info-item">
+              <span class="info-label">批准文号</span>
+              <span class="info-value">{{ drugData.approvalNumber }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">生产厂家</span>
+              <span class="info-value">{{ drugData.manufacturer }}</span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">生产厂家</span>
-            <span class="info-value">{{ drugData.manufacturer }}</span>
+          <div class="info-row">
+            <div class="info-item">
+              <span class="info-label">生产地址</span>
+              <span class="info-value">{{ drugData.productionAddress }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">药品规格</span>
+              <span class="info-value">{{ drugData.specification }}</span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">药品规格</span>
-            <span class="info-value">{{ drugData.specification }}</span>
+          <div class="info-row">
+            <div class="info-item">
+              <span class="info-label">包装材质</span>
+              <span class="info-value">{{ drugData.packagingMaterial }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">有效期</span>
+              <span class="info-value">{{ drugData.validityPeriod }}</span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">剂型</span>
-            <span class="info-value">{{ drugData.dosageForm }}</span>
+          <div class="info-row">
+            <div class="info-item">
+              <span class="info-label">剂型</span>
+              <span class="info-value">{{ drugData.dosageForm }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">药品分类</span>
+              <span class="info-value">{{ drugData.drugClassification }}</span>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-item">
+              <span class="info-label">用药类型</span>
+              <span class="info-value">{{ drugData.drugType }}</span> 
+            </div>
           </div>
         </div>
         <div class="action-btns">
@@ -105,6 +136,18 @@ const handleCopy = (text) => {
           <span class="section-title">药品信息</span>
         </div>
         <div class="drug-info-content">
+          <div class="info-block">
+            <div class="info-block-title">成分</div>
+            <div class="info-block-text">
+              {{ drugData.ingredients || '尚不明确' }}
+            </div>
+          </div>
+          <div class="info-block">
+            <div class="info-block-title">性状</div>
+            <div class="info-block-text">
+              {{ drugData.properties || '尚不明确' }}
+            </div>
+          </div>
           <div class="info-block">
             <div class="info-block-title">适应症</div>
             <div class="info-block-text">
@@ -251,7 +294,7 @@ const handleCopy = (text) => {
   }
 
   .info-list {
-    .info-item {
+    .info-row {
       display: flex;
       padding: 10px 0;
       border-bottom: 1px dashed #ebeef5;
@@ -260,17 +303,22 @@ const handleCopy = (text) => {
         border-bottom: none;
       }
 
-      .info-label {
-        width: 80px;
-        flex-shrink: 0;
-        font-size: 14px;
-        color: #909399;
-      }
-
-      .info-value {
+      .info-item {
+        display: flex;
         flex: 1;
-        font-size: 14px;
-        color: #303133;
+
+        .info-label {
+          width: 80px;
+          flex-shrink: 0;
+          font-size: 14px;
+          color: #909399;
+        }
+
+        .info-value {
+          flex: 1;
+          font-size: 14px;
+          color: #303133;
+        }
       }
     }
   }

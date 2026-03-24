@@ -1,3 +1,4 @@
+// 收藏药品页面
 <script setup>
 import { ref } from 'vue'
 import { Search, View, Delete } from '@element-plus/icons-vue'
