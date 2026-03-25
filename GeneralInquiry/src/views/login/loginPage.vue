@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { userRegisterService, userLoginService } from '@/api/user.js'
+import { watch } from 'vue'
+import { useUserStore } from '@/stores/index.js'
 
 const router = useRouter()
 const isRegister = ref(false)  // 是否是注册页面
@@ -17,11 +20,21 @@ const loginForm = ref({
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 15, message: '用户名长度在3-15位之间', trigger: 'blur' }
+    { min: 3, max: 15, message: '用户名长度在3-15位之间', trigger: 'blur' },
+    { 
+    validator: (rule, value, callback) => {
+      if (value.includes(' ')) {
+        callback(new Error('用户名不能包含空格'));
+      }
+      callback();
+    },
+      trigger: 'blur'
+    }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 15, message: '密码长度在6-15位之间', trigger: 'blur' }
+    { min: 6, max: 15, message: '密码长度在6-15位之间', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: '密码只能包含字母、数字和下划线', trigger: 'blur' }
   ],
   repassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
@@ -34,21 +47,47 @@ const rules = {
     }, trigger: 'blur' }
   ]
 }
-
+// 表单引用
 const formRef = ref(null)
 
+// 注册
+const handleRegister = async () => {
+  await formRef.value.validate()
+  // TODO: 调用注册接口
+  const res = await userRegisterService(loginForm.value)
+  if(res.code === 200){
+    ElMessage.success('注册成功')
+    isRegister.value = false
+  } else {
+    ElMessage.error(res.msg)
+  }
+}
+
+const userStore = useUserStore()
 // 登录
 const handleLogin = async () => {
   await formRef.value.validate()
-  console.log('登录:', loginForm.value)
   // TODO: 调用登录接口
+  const res = await userLoginService(loginForm.value)
+  if(res.code === 200){
+    //同步到Pinia仓库
+    userStore.addToken(res.token)
+    ElMessage.success('登录成功')
+    router.push({ name: 'home' })
+  } else {
+    ElMessage.error(res.msg)
+  }
 }
 
-// 去注册
-const goToRegister = () => {
-  console.log('去注册')
-  // router.push('/register')
-}
+//卡片切换重置表单数据
+watch(isRegister, () =>{
+  loginForm.value = {
+    username: '',
+    password: '',
+    repassword: '',
+    remember: false
+  }
+})
 </script>
 
 <template>
@@ -107,7 +146,7 @@ const goToRegister = () => {
             type="primary"
             size="large"
             class="login-btn"
-            @click="handleLogin"
+            @click="handleRegister"
           >
             注册
           </el-button>

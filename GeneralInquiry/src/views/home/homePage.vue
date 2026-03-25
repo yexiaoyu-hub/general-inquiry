@@ -2,7 +2,15 @@
 import { ref } from 'vue'
 import { Promotion, Top } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/index.js'
 
+const userStore = useUserStore()
+console.log(userStore.username);
+
+// 登录点击跳转
+const handleLoginClick = () => {
+  router.push('/login')
+}
 // 轮播图数据
 const carouselList = ref([
   { id: 1, content: '/lunbo/lunbo1.png' },
@@ -31,7 +39,14 @@ const handleDrugClick = () => {
         <text class="text">峰思维</text>
       </el-menu-item>
       <div class="user">
-        <text>请登录</text>
+        <text v-if="!userStore.token" @click="handleLoginClick"
+              style="text-decoration: underline;
+              color: #50C3F7;
+              cursor: pointer;"
+              >
+        请登录
+        </text>
+        <text v-else>{{ userStore.username }}</text>
         <el-avatar class="photo" :size="40" />
       </div>
     </el-menu>
@@ -154,17 +169,19 @@ const handleDrugClick = () => {
   }
   .header-title {
     font-size: 36px;
-    font-weight: 500;
-    color: #000;
+    font-weight: 700;
+    color: #2C5A84;
     position: absolute;
     top: 20px;
     left: 420px;
   }
   .slogan {
     font-size: 14px;
+    font-weight: 700;
     position: absolute;
     top: 100px;
     left: 420px;
+    color: #2C5A84;
   }
 }
 /* 主体 */
@@ -238,9 +255,9 @@ const handleDrugClick = () => {
   width: 80px;
   height: 124px;
   position: fixed;
-  top: 300px;
+  top: 500px;
   right: 0;
-  .lianxi {
+  .lianxi { 
     background-color: #4dadf7;
     border-radius: 5px;
     height: 60px;

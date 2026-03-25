@@ -5,13 +5,13 @@ import { defineStore } from 'pinia'
 export const useUserStore = defineStore('token-user', () => {
   //token
   const token = ref()
-  const addtoken = (val) => {
+  const addToken = (val) => {
     token.value = val
   }
-  const removetoken = () => {
+  const removeToken = () => {
     token.value = null
   }
-  //用户
+  //用户信息
   const user = ref({})
   const getuser = async () => {
     // const res =  await userGetinfoService()
@@ -22,7 +22,7 @@ export const useUserStore = defineStore('token-user', () => {
   } 
 
 
-  return { token, addtoken, removetoken,user,reuser }
+  return { token, addToken, removeToken,user,reuser }
 },
 {
   persist:true
