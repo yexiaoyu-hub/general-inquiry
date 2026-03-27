@@ -7,3 +7,7 @@ export const userRegisterService = (data) => {
 // 用户登录接口
 export const userLoginService = (data) => {
   return request({url: '/user/login',method: 'post',data})}
+
+// 获取用户信息接口
+export const userGetinfoService = (username,token) => {
+  return request({url: '/user/info',method: 'get',params:{username,token}})}

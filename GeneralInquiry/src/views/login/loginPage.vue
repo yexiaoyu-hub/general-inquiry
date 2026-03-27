@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { userRegisterService, userLoginService } from '@/api/user.js'
@@ -16,11 +16,20 @@ const loginForm = ref({
   remember: false
 })
 
+// 页面加载时，读取记住的用户名
+onMounted(() => {
+  const rememberedUsername = localStorage.getItem('rememberedUsername')
+  if (rememberedUsername) {
+    loginForm.value.username = rememberedUsername
+    loginForm.value.remember = true
+  }
+})
+
 // 表单校验规则
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 15, message: '用户名长度在3-15位之间', trigger: 'blur' },
+    { min: 1, max: 15, message: '用户名长度在1-15位之间', trigger: 'blur' },
     { 
     validator: (rule, value, callback) => {
       if (value.includes(' ')) {
@@ -72,6 +81,12 @@ const handleLogin = async () => {
   if(res.code === 200){
     //同步到Pinia仓库
     userStore.addToken(res.token)
+    // 处理记住我功能
+    if (loginForm.value.remember) {
+      localStorage.setItem('rememberedUsername', loginForm.value.username)
+    } else {
+      localStorage.removeItem('rememberedUsername')
+    }
     ElMessage.success('登录成功')
     router.push({ name: 'home' })
   } else {

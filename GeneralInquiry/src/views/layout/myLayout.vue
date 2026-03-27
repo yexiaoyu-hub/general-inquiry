@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/index.js'
 import { ref } from 'vue'
 
 const useruse = useUserStore()
+//获取用户信息
 // useruse.getuser()
 
 //右上角退出登录
@@ -81,7 +82,7 @@ const userinfo = ref({
           <!-- 折叠部分 -->
           <template #dropdown>
             <div class="user-dropdown-card">
-              <!-- 顶部用户信息区域 -->
+              <!-- 顶部用户信息 -->
               <div class="user-info-header">
                 <el-avatar :size="50" src="" class="user-avatar" />
                 <div class="user-details">

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import axios from 'axios'
 import { Promotion, Top } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/index.js'
 
 const userStore = useUserStore()
-console.log(userStore.username);
+//获取用户信息
+userStore.getuser()
+console.log(userStore.userinfo)
 
 // 登录点击跳转
 const handleLoginClick = () => {
