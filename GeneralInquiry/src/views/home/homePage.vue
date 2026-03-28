@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import axios from 'axios'
 import { Promotion, Top } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/index.js'
@@ -8,7 +7,7 @@ import { useUserStore } from '@/stores/index.js'
 const userStore = useUserStore()
 //获取用户信息
 userStore.getuser()
-console.log(userStore.userinfo)
+
 
 // 登录点击跳转
 const handleLoginClick = () => {
@@ -49,7 +48,7 @@ const handleDrugClick = () => {
               >
         请登录
         </text>
-        <text v-else>{{ userStore.username }}</text>
+        <text v-else>{{ 1 }}</text>
         <el-avatar class="photo" :size="40" />
       </div>
     </el-menu>

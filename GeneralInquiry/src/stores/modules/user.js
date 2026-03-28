@@ -15,12 +15,11 @@ export const useUserStore = defineStore('token-user', () => {
   //用户信息
   const userinfo = ref({})
   const getuser = async () => {
-    const username = localStorage.getItem("username")
     const token = localStorage.getItem("token")
-    if(!username || !token){
+    if(!token){
       return
     }
-    const res =  await userGetinfoService(username,token)
+    const res =  await userGetinfoService(token)
     userinfo.value = res.data.data
   }  
   const reuser = async () => {
