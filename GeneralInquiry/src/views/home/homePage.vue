@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Promotion, Top } from '@element-plus/icons-vue'
+import { Promotion, Top , SwitchButton } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/index.js'
+import { onMounted } from 'vue'
 
 const userStore = useUserStore()
 //获取用户信息
-userStore.getuser()
+onMounted(() => {
+  userStore.getuser()
+})
 
 
 // 登录点击跳转
 const handleLoginClick = () => {
   router.push('/login')
+}
+// 退出登录点击跳转
+const handleLogoutClick = () => {
+  userStore.removeToken() //清空数据
+  userStore.removeUser()   //清空数据
 }
 // 轮播图数据
 const carouselList = ref([
@@ -30,6 +38,9 @@ const scrollToTop = () => {
 const router = useRouter()
 const handleDrugClick = () => {
   router.push('/content/query')
+  if (!userStore.token) {
+    ElMessage.error('请先登录')
+  }
 }
 </script>
 
@@ -48,9 +59,31 @@ const handleDrugClick = () => {
               >
         请登录
         </text>
-        <text v-else>{{ 1 }}</text>
-        <el-avatar class="photo" :size="40" />
-      </div>
+        <el-dropdown v-else placement="bottom">
+          <div class="user-info">
+            <text style="color: #545C64; font-size: 18px;">
+              {{ userStore.userinfo.nickname || userStore.userinfo.username }}
+            </text>
+            <el-avatar class="photo" :size="40" />
+          </div>
+          <template #dropdown>
+            <div class="user-dropdown-card">
+              <div class="user-info-header">
+                <el-avatar :size="50" src="" class="user-avatar" />
+                <div class="user-details">
+                  <div class="user-name-dropdown">{{userStore.userinfo.nickname || userStore.userinfo.username}}</div>
+                </div>
+              </div>
+              <div class="user-menu-body">
+                <div class="menu-item" @click="handleLogoutClick()">
+                  <el-icon class="menu-icon"><SwitchButton /></el-icon>
+                  <span>退出登录</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-dropdown>
+      </div> 
     </el-menu>
 
     <!-- 顶部导航栏 -->
@@ -151,7 +184,6 @@ const handleDrugClick = () => {
     text {
       font-size: 14px;
       color: #9d9d9d;
-      margin-right: 10px;
     }
   }
 }
@@ -175,14 +207,14 @@ const handleDrugClick = () => {
     color: #2C5A84;
     position: absolute;
     top: 20px;
-    left: 420px;
+    left: 350px;
   }
   .slogan {
     font-size: 14px;
     font-weight: 700;
     position: absolute;
     top: 100px;
-    left: 420px;
+    left: 350px;
     color: #2C5A84;
   }
 }
@@ -237,6 +269,7 @@ const handleDrugClick = () => {
         display: flex;
         flex-direction: column;
         align-items: center;
+        cursor: pointer;
         .card-img {
           width: 80px;
           height: 80px;
@@ -259,6 +292,7 @@ const handleDrugClick = () => {
   position: fixed;
   top: 500px;
   right: 0;
+  cursor: pointer;
   .lianxi { 
     background-color: #4dadf7;
     border-radius: 5px;
@@ -297,5 +331,67 @@ const handleDrugClick = () => {
   padding: 12px;
   font-size: 12px;
   color: #666;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+// 触发器焦点去除
+:deep(.el-tooltip__trigger) {
+  outline: none !important;
+  &:focus {
+    outline: none !important;
+  }
+}
+// 用户下拉菜单
+.user-dropdown-card {
+  width: 220px;
+  background-color: #fff;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  .user-info-header {
+    background: linear-gradient(135deg, #96c2d9 0%, #2b95d6 100%);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    .user-avatar {
+      border: 2px solid #fff;
+      flex-shrink: 0;
+    }
+    .user-details {
+      .user-name-dropdown {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+      }
+    }
+  }
+  .user-menu-body {
+    padding: 10px 0;
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      &:hover {
+        background-color: #f5f7fa;
+      }
+      .menu-icon {
+        font-size: 18px;
+        color: #909399;
+        margin-right: 12px;
+      }
+      span {
+        font-size: 14px;
+        color: #606266;
+      }
+    }
+  }
 }
 </style>

@@ -15,19 +15,18 @@ export const useUserStore = defineStore('token-user', () => {
   //用户信息
   const userinfo = ref({})
   const getuser = async () => {
-    const token = localStorage.getItem("token")
-    if(!token){
+    if(!token.value){
       return
     }
-    const res =  await userGetinfoService(token)
-    userinfo.value = res.data.data
+    const res = await userGetinfoService()
+    userinfo.value = res.data
   }  
-  const reuser = async () => {
+  const removeUser = async () => {
     userinfo.value = ({})
   } 
 
 
-  return { token, addToken, removeToken, userinfo, getuser, reuser }
+  return { token, addToken, removeToken, userinfo, getuser, removeUser }
 },
 {
   persist:true

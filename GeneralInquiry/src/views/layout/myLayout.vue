@@ -4,9 +4,9 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/index.js'
 import { ref } from 'vue'
 
-const useruse = useUserStore()
+const userStore = useUserStore() 
 //获取用户信息
-// useruse.getuser()
+userStore.getuser()
 
 //右上角退出登录
 const rou = useRouter()
@@ -20,8 +20,8 @@ const handleCommand = async (command) =>{
       cancelButtonText: '取消',
       type: 'warning',
     })  
-  useruse.removetoken() //清空数据
-  useruse.reuser()   //清空数据
+  userStore.removeToken() //清空数据
+  userStore.removeUser()   //清空数据
   rou.push('/home') //跳转首页
  }
  else{
@@ -30,12 +30,6 @@ const handleCommand = async (command) =>{
 const handleHomeClick = () => {
   rou.push('/home')
 }
-
-//用户数据显示
-const userinfo = ref({
-  name: "张三",
-  phone: "18312345688",
-})
 
 </script>
 
@@ -86,8 +80,8 @@ const userinfo = ref({
               <div class="user-info-header">
                 <el-avatar :size="50" src="" class="user-avatar" />
                 <div class="user-details">
-                  <div class="user-name-dropdown">{{userinfo.name}}</div>
-                  <div class="user-phone">{{userinfo.phone}}</div>
+                  <div class="user-name-dropdown">{{userStore.userinfo.nickname || userStore.userinfo.username}}</div>
+                  <div class="user-phone">{{13888888888}}</div>
                 </div>
               </div>
               <!-- 底部菜单区域 -->

@@ -13,8 +13,9 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     const userStore = useUserStore()
+    // token添加到请求头
     if (userStore.token) {
-      config.headers.Authorization = userStore.token
+      config.headers.token = userStore.token
     }
     return config
   },

@@ -23,8 +23,8 @@ const router = createRouter({
 router.beforeEach((to) => {
   const userStore = useUserStore()
   if (!userStore.token && to.name !== 'login' && to.name !== 'home') {
-    // 没token → 跳登录
-    return '/login'
+    // 没token → 跳首页
+    return '/home'
   }
 })
 
