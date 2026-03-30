@@ -340,8 +340,8 @@ const handleDelete = (row, index) => {
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="主要功效:" prop="mainEffects">
-              <el-input v-model="formData.mainEffects" placeholder="请输入主要功效" />
+            <el-form-item label="不良反应:" prop="adverseReactions">
+              <el-input v-model="formData.adverseReactions" placeholder="请输入不良反应" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -354,13 +354,13 @@ const handleDelete = (row, index) => {
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="不良反应:" prop="adverseReactions">
-              <el-input v-model="formData.adverseReactions" placeholder="请输入不良反应" />
+            <el-form-item label="注意事项:" prop="notice">
+              <el-input v-model="formData.notice" placeholder="请输入注意事项" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <!-- 第六行 - 图片上传 -->
+        <!-- 第六行  -->
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="药品类别:" prop="drugCategory">
@@ -371,7 +371,7 @@ const handleDelete = (row, index) => {
               </el-checkbox-group>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="4">
             <el-form-item label="图片:" prop="image">
               <el-upload
                 class="image-uploader"
@@ -387,6 +387,11 @@ const handleDelete = (row, index) => {
                   <el-icon class="upload-icon"><Plus /></el-icon>
                 </div>
               </el-upload>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="贮藏:" prop="storage">
+              <el-input v-model="formData.storage" placeholder="请输入贮藏方式" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -434,7 +439,7 @@ const handleDelete = (row, index) => {
                 <el-input v-model="row.specification" />  
               </template>
             </el-table-column>
-            <el-table-column label="保质期" align="center" prop="shelfLife">
+            <el-table-column label="有效期" align="center" prop="shelfLife">
               <template #default="{ row }">
                 <el-input v-model="row.shelfLife" />  
               </template>

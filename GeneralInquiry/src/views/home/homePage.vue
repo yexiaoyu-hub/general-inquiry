@@ -37,10 +37,10 @@ const scrollToTop = () => {
 // 药品查询点击跳转
 const router = useRouter()
 const handleDrugClick = () => {
-  router.push('/content/query')
   if (!userStore.token) {
     ElMessage.error('请先登录')
   }
+  router.push('/content/query')
 }
 </script>
 
@@ -57,7 +57,7 @@ const handleDrugClick = () => {
               color: #50C3F7;
               cursor: pointer;"
               >
-        请登录
+        请登录~
         </text>
         <el-dropdown v-else placement="bottom">
           <div class="user-info">
