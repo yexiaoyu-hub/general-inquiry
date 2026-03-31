@@ -1,15 +1,26 @@
 // 药品管理页面
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import NewAddDrugs from './components/newadddrugs.vue'
+import { drugListService } from '@/api/drug.js'
 
 // 表格数据
-const tableData = ref([
-  {
-    drugName:'测试数据'
-  }
-])
+const tableData = ref([])
+// 获取药品列表数据
+const getDrugList = async () => {
+  const res = await drugListService()
+  tableData.value = res.data
+  console.log(tableData.value)
+  // 总条数
+  total.value = res.data.length
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  getDrugList()
+})
+
 
 // 新增药品弹窗
 const newAddDrugsVisible = ref(false)
@@ -75,9 +86,9 @@ const handleEdit = (row) => {
       <div class="table-container">
         <el-table :data="tableData" style="width: 100%" class="collect-table">
           <el-table-column label="药品名称" min-width="120" prop="drugName" />
-          <el-table-column label="厂家" min-width="180" prop="manufacturer" />
-          <el-table-column label="批准文号" min-width="140" prop="approvalNumber" />
-          <el-table-column label="药品编码" min-width="140" prop="specification" />
+          <el-table-column label="通用名" min-width="180" prop="commonName" />
+          <el-table-column label="分类" min-width="140" prop="category" />
+          <el-table-column label="适用症" min-width="140" prop="indications" />
           <el-table-column label="创建时间" min-width="140" prop="collectTime" />
           <el-table-column label="更新时间" min-width="140" prop="updateTime" />
           <el-table-column label="操作" width="120" fixed="right">

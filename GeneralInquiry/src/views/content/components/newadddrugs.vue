@@ -2,6 +2,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Plus, CirclePlus } from '@element-plus/icons-vue'
+import { drugAddService } from '@/api/drug.js'
+
+
 
 // 定义 props
 const props = defineProps({
@@ -27,8 +30,8 @@ const handleAdd = () => {
     approvalNumber: '',
     drugCode: '',
     specification: '',
-    shelfLife: '',
-    packageMaterial: ''
+    validityPeriod: '',
+    packagingMaterial: ''
   })
   // 重置药品信息表单
   drugRef.value?.resetFields()
@@ -42,18 +45,18 @@ const emit = defineEmits(['update:visible', 'submit', 'cancel'])
 // 表单数据
 const formData = ref({
   drugName: '',
-  genericName: '',
-  dosage: '',
+  commonName: '',
+  usageDosage: '',
   dosageForm: '颗粒剂',
-  character: '',
-  ingredients: '',
+  properties: '',
+  composition: '',
   medicationType: '非处方药',
   category: '西药',
   indications: '',
-  mainEffects: '',
-  contraindications: '',
-  adverseReactions: '',
-  drugCategory: [],
+  precautions: '',
+  taboo: '',
+  adverseReaction: '',
+  drugTypes: [],
   image: ''
 })
 
@@ -62,21 +65,21 @@ watch(() => props.editData, (newVal) => {
   if (newVal && props.visible) {
     formData.value = {
       drugName: newVal.drugName || '',
-      genericName: newVal.genericName || '',
-      dosage: newVal.dosage || '',
+      commonName: newVal.commonName || '',
+      usageDosage: newVal.usageDosage || '',
       dosageForm: newVal.dosageForm || '颗粒剂',
-      character: newVal.character || '',
-      ingredients: newVal.ingredients || '',
+      properties: newVal.properties || '',
+      composition: newVal.composition || '',
       medicationType: newVal.medicationType || '非处方药',
       category: newVal.category || '西药',
       indications: newVal.indications || '',
-      mainEffects: newVal.mainEffects || '',
-      contraindications: newVal.contraindications || '',
-      adverseReactions: newVal.adverseReactions || '',
-      drugCategory: newVal.drugCategory || [],
+      precautions: newVal.precautions || '',
+      taboo: newVal.taboo || '',
+      adverseReaction: newVal.adverseReaction || '',
+      drugTypes: newVal.drugTypes || [],
       image: newVal.image || ''
     }
-    drugInfoData.value = newVal.drugInfo || []
+    drugInfoData.value = newVal.drugInfoList || []
   }
 }, { immediate: true })
 
@@ -132,18 +135,18 @@ const handleClose = () => {
   emit('cancel')
   formData.value = {
     drugName: '',
-    genericName: '',
-    dosage: '',
+    commonName: '',
+    usageDosage: '',
     dosageForm: '颗粒剂',
-    character: '',
-    ingredients: '',
+    properties: '',
+    composition: '',
     medicationType: '非处方药',
     category: '西药',
     indications: '',
-    mainEffects: '',
-    contraindications: '',
-    adverseReactions: '',
-    drugCategory: [],
+    precautions: '',
+    taboo: '',
+    adverseReaction: '',
+    drugTypes: [],
     image: ''
   }
   drugInfoData.value = []
@@ -158,7 +161,14 @@ const handleSubmit = async () => {
   // 校验药品信息
   if (!validateDrugInfo()) return
   
-  emit('submit', { ...formData.value, drugInfo: drugInfoData.value })
+  // 提交表单数据
+  const res = await drugAddService({ ...formData.value, drugInfoList: drugInfoData.value })
+  if(res.code === 200){
+    ElMessage.success('新增药品成功')
+  }else{
+    ElMessage.error(res.msg || '新增药品失败')
+  }
+  emit('submit', { ...formData.value, drugInfoList: drugInfoData.value })
   emit('update:visible', false)
 }
 
@@ -166,18 +176,18 @@ const handleSubmit = async () => {
 const handleResetinfo = () => {
   formData.value = {
     drugName: '',
-    genericName: '',
-    dosage: '',
+    commonName: '',
+    usageDosage: '',
     dosageForm: '颗粒剂',
-    character: '',
-    ingredients: '',
+    properties: '',
+    composition: '',
     medicationType: '非处方药',
     category: '西药',
     indications: '',
-    mainEffects: '',
-    contraindications: '',
-    adverseReactions: '',
-    drugCategory: [],
+    precautions: '',
+    taboo: '',
+    adverseReaction: '',
+    drugTypes: [],
     image: ''
   }
   formRef.value?.resetFields()
@@ -267,13 +277,13 @@ const handleDelete = (row, index) => {
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="药品通用名:" prop="genericName">
-              <el-input v-model="formData.genericName" placeholder="请输入通用名" />
+            <el-form-item label="药品通用名:" prop="commonName">
+              <el-input v-model="formData.commonName" placeholder="请输入通用名" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="用法用量:" prop="dosage">
-              <el-input v-model="formData.dosage" placeholder="请输入用法用量" />
+            <el-form-item label="用法用量:" prop="usageDosage">
+              <el-input v-model="formData.usageDosage" placeholder="请输入用法用量" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -321,13 +331,13 @@ const handleDelete = (row, index) => {
         <!-- 第三行 -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="性状:" prop="character">
-              <el-input v-model="formData.character" placeholder="请输入性状" />
+            <el-form-item label="性状:" prop="properties">
+              <el-input v-model="formData.properties" placeholder="请输入性状" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="成分:" prop="ingredients">
-              <el-input v-model="formData.ingredients" placeholder="请输入成分" />
+            <el-form-item label="成分:" prop="composition">
+              <el-input v-model="formData.composition" placeholder="请输入成分" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -340,8 +350,8 @@ const handleDelete = (row, index) => {
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="不良反应:" prop="adverseReactions">
-              <el-input v-model="formData.adverseReactions" placeholder="请输入不良反应" />
+            <el-form-item label="不良反应:" prop="adverseReaction">
+              <el-input v-model="formData.adverseReaction" placeholder="请输入不良反应" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -349,13 +359,13 @@ const handleDelete = (row, index) => {
         <!-- 第五行 -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="禁忌:" prop="contraindications">
-              <el-input v-model="formData.contraindications" placeholder="请输入禁忌" />
+            <el-form-item label="禁忌:" prop="taboo">
+              <el-input v-model="formData.taboo" placeholder="请输入禁忌" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="注意事项:" prop="notice">
-              <el-input v-model="formData.notice" placeholder="请输入注意事项" />
+            <el-form-item label="注意事项:" prop="precautions">
+              <el-input v-model="formData.precautions" placeholder="请输入注意事项" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -363,8 +373,8 @@ const handleDelete = (row, index) => {
         <!-- 第六行  -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="药品类别:" prop="drugCategory">
-              <el-checkbox-group v-model="formData.drugCategory" v-for="value in drugCategoryOptions" :key="value.value">
+            <el-form-item label="药品类别:" prop="drugTypes">
+              <el-checkbox-group v-model="formData.drugTypes" v-for="value in drugCategoryOptions" :key="value.value">
                 <el-checkbox :value="value.value" name="value.label">
                   {{ value.label }}
                 </el-checkbox>
@@ -439,14 +449,14 @@ const handleDelete = (row, index) => {
                 <el-input v-model="row.specification" />  
               </template>
             </el-table-column>
-            <el-table-column label="有效期" align="center" prop="shelfLife">
+            <el-table-column label="有效期" align="center" prop="validityPeriod">
               <template #default="{ row }">
-                <el-input v-model="row.shelfLife" />  
+                <el-input v-model="row.validityPeriod" />  
               </template>
             </el-table-column>
-            <el-table-column label="包装材质" align="center" prop="packageMaterial">
+            <el-table-column label="包装材质" align="center" prop="packagingMaterial">
               <template #default="{ row }">
-                <el-select v-model="row.packageMaterial" placeholder="请选择" style="width: 100%">
+                <el-select v-model="row.packagingMaterial" placeholder="请选择" style="width: 100%">
                   <el-option
                     v-for="item in packageMaterialOptions"
                     :key="item.value"
