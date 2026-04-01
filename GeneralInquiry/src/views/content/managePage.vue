@@ -3,17 +3,20 @@
 import { ref, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import NewAddDrugs from './components/newadddrugs.vue'
-import { drugListService } from '@/api/drug.js'
+import { drugListService, drugDeleteService } from '@/api/drug.js'
 
 // 表格数据
 const tableData = ref([])
+// 原始全量数据（用于搜索）
+const originalTableData = ref([])
+
 // 获取药品列表数据
 const getDrugList = async () => {
   const res = await drugListService()
-  tableData.value = res.data
-  console.log(tableData.value)
+  originalTableData.value = res.data || []
+  tableData.value = res.data || []
   // 总条数
-  total.value = res.data.length
+  total.value = tableData.value.length
 }
 
 // 页面加载时获取数据
@@ -27,10 +30,6 @@ const newAddDrugsVisible = ref(false)
 // 编辑数据
 const editRowData = ref(null)
 
-
-
-// 搜索关键字
-const searchKeyword = ref('')
 const total = ref(0)         //总条数数据
 // 分页数据
 const params = ref({
@@ -39,24 +38,66 @@ const params = ref({
  cate_id:'',
  state:''
 })
+
+const searchKeyword = ref('') // 搜索关键字
 // 搜索
 const handleSearch = () => {
-  console.log('搜索:', searchKeyword.value)
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  if (!keyword) {
+    tableData.value = originalTableData.value
+  } else {
+    tableData.value = originalTableData.value.filter(item => {
+      return (
+        (item.drugName && item.drugName.toLowerCase().includes(keyword)) ||
+        (item.commonName && item.commonName.toLowerCase().includes(keyword)) ||
+        (item.category && item.category.toLowerCase().includes(keyword)) ||
+        (item.indications && item.indications.toLowerCase().includes(keyword))
+      )
+    })
+  }
+  total.value = tableData.value.length
 }
-// 重置
+// 重置搜索
 const handleReset = () => {
   searchKeyword.value = ''
+  tableData.value = originalTableData.value
+  total.value = tableData.value.length
 }
+
+
 // 新增药品
 const handleAdd = () => {
   newAddDrugsVisible.value = true
 }
-//编辑药品
+// 编辑药品
 const handleEdit = (row) => {
   editRowData.value = { ...row }
   newAddDrugsVisible.value = true
 }
+// 删除药品
+const handleDelete = async (row) => {
+  // 确认删除
+  const confirm = await ElMessageBox.confirm('确认删除吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  if (!confirm) return
+  
+  const res = await drugDeleteService(row.id)
+  if(res.code === 200){
+    ElMessage.success('删除成功')
+    getDrugList()
+  }else{
+    ElMessage.error(res.msg || '删除失败')
+  }
+}
 
+// 新增/编辑成功后刷新列表
+const handleSubmitAdd = () => {
+  getDrugList()
+  editRowData.value = null
+}
 
 </script>
 
@@ -71,6 +112,7 @@ const handleEdit = (row) => {
           placeholder="搜索关键字"
           class="search-input"
           clearable
+          @keyup.enter="handleSearch"
         />
       </div>
       <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
@@ -89,8 +131,16 @@ const handleEdit = (row) => {
           <el-table-column label="通用名" min-width="180" prop="commonName" />
           <el-table-column label="分类" min-width="140" prop="category" />
           <el-table-column label="适用症" min-width="140" prop="indications" />
-          <el-table-column label="创建时间" min-width="140" prop="collectTime" />
-          <el-table-column label="更新时间" min-width="140" prop="updateTime" />
+          <el-table-column label="创建时间" min-width="140" prop="createTime">
+            <template #default="{ row }">
+              {{ row.createTime?.replace('T', ' ') }}
+            </template>
+          </el-table-column>
+          <el-table-column label="更新时间" min-width="140" prop="updateTime">
+            <template #default="{ row }">
+              {{ row.updateTime?.replace('T', ' ') }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <div class="operation-btns">

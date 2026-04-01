@@ -2,7 +2,8 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Plus, CirclePlus } from '@element-plus/icons-vue'
-import { drugAddService } from '@/api/drug.js'
+import { drugAddService, drugUpdateService } from '@/api/drug.js'
+
 
 
 
@@ -152,21 +153,36 @@ const handleClose = () => {
   drugInfoData.value = []
 }
 
-// 提交表单
+// 提交新增药品表单
 const handleSubmit = async () => {
   // 校验基本信息
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
-  
   // 校验药品信息
   if (!validateDrugInfo()) return
-  
   // 提交表单数据
   const res = await drugAddService({ ...formData.value, drugInfoList: drugInfoData.value })
   if(res.code === 200){
     ElMessage.success('新增药品成功')
   }else{
     ElMessage.error(res.msg || '新增药品失败')
+  }
+  emit('submit', { ...formData.value, drugInfoList: drugInfoData.value })
+  emit('update:visible', false)
+}
+// 提交编辑药品表单
+const handleSubmitEdit = async () => {
+  // 校验基本信息
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  // 校验药品信息
+  if (!validateDrugInfo()) return
+  // 提交表单数据，带上 id
+  const res = await drugUpdateService({ ...formData.value, id: props.editData.id, drugInfoList: drugInfoData.value })
+  if(res.code === 200){
+    ElMessage.success('更新药品成功')
+  }else{
+    ElMessage.error(res.msg || '更新药品失败')
   }
   emit('submit', { ...formData.value, drugInfoList: drugInfoData.value })
   emit('update:visible', false)
@@ -254,8 +270,8 @@ const handleDelete = (row, index) => {
   <el-dialog
     :model-value="visible"
     @update:model-value="emit('update:visible', $event)"
-    :title="editRowData?.drugName ? '编辑' : '新增'"  
-    width="70%"
+    :title="formData.drugName ? '编辑药品' : '新增药品'"  
+    width="80%"
     :close-on-click-modal="false"
     class="drug-dialog"
     @close="handleClose"
@@ -411,7 +427,7 @@ const handleDelete = (row, index) => {
         <span class="title-icon">|</span>
         <span class="title-text">药品信息</span>
       </div>
-      <el-button type="primary" class="add-btn" @click="handleAdd" round>
+      <el-button type="success" class="add-btn" @click="handleAdd" plain>
         <el-icon><CirclePlus /></el-icon>
         添加药品信息
       </el-button>
@@ -479,7 +495,8 @@ const handleDelete = (row, index) => {
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button @click="handleResetinfo">重置</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" @click="handleSubmit" v-if="!formData.drugName">确定</el-button>
+        <el-button type="success" @click="handleSubmitEdit" v-else>保存</el-button>
       </div>
     </template>
   </el-dialog>
@@ -526,8 +543,6 @@ const handleDelete = (row, index) => {
     }
   }
   .add-btn {
-    background-color: transparent;
-    color: #1E98D7;
     border: none;
   }
 }
