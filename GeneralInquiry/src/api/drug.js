@@ -15,3 +15,7 @@ export const drugUpdateService = (data) => {
 // 删除药品接口
 export const drugDeleteService = (id) => {
   return request({url: '/drug/' + id,method: 'delete'})}
+
+// 分页查询药品接口
+export const drugPageService = (params) => {
+  return request({url: '/drug/page',method: 'get', params})}

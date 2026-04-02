@@ -1,7 +1,7 @@
 // 新增药品组件
 <script setup>
-import { ref, watch } from 'vue'
-import { Plus, CirclePlus } from '@element-plus/icons-vue'
+import { ref, watch, computed } from 'vue'
+import { Plus, CirclePlus, ZoomIn, CircleClose } from '@element-plus/icons-vue'
 import { drugAddService, drugUpdateService } from '@/api/drug.js'
 
 
@@ -19,6 +19,9 @@ const props = defineProps({
   }
 })
 
+// 计算是否为编辑模式
+const isEditMode = computed(() => !!props.editData?.id)
+
 const formRef = ref(null)  // 表单引用
 const drugRef = ref(null)  // 药品信息引用
 const drugInfoData = ref([])  // 药品信息数据
@@ -32,10 +35,24 @@ const handleAdd = () => {
     drugCode: '',
     specification: '',
     validityPeriod: '',
-    packagingMaterial: ''
+    packagingMaterial: '',
+    image: ''
   })
   // 重置药品信息表单
   drugRef.value?.resetFields()
+}
+
+// 行图片上传成功
+const handleRowImageSuccess = (response, row) => {
+  row.image = response.data || response.url
+  ElMessage.success('图片上传成功')
+}
+
+// 预览图片
+const previewImage = (url) => {
+  if (url) {
+    window.open(url, '_blank')
+  }
 }
 
 
@@ -57,8 +74,7 @@ const formData = ref({
   precautions: '',
   taboo: '',
   adverseReaction: '',
-  drugTypes: [],
-  image: ''
+  drugTypes: []
 })
 
 // 监听编辑数据变化，回显到表单
@@ -77,8 +93,7 @@ watch(() => props.editData, (newVal) => {
       precautions: newVal.precautions || '',
       taboo: newVal.taboo || '',
       adverseReaction: newVal.adverseReaction || '',
-      drugTypes: newVal.drugTypes || [],
-      image: newVal.image || ''
+      drugTypes: newVal.drugTypes || []
     }
     drugInfoData.value = newVal.drugInfoList || []
   }
@@ -203,8 +218,7 @@ const handleResetinfo = () => {
     precautions: '',
     taboo: '',
     adverseReaction: '',
-    drugTypes: [],
-    image: ''
+    drugTypes: []
   }
   formRef.value?.resetFields()
   drugRef.value?.resetFields()
@@ -225,11 +239,6 @@ const beforeImageUpload = (file) => {
     return false
   }
   return true
-}
-// 图片上传成功
-const handleImageSuccess = (response) => {
-  formData.value.image = response.url
-  ElMessage.success('图片上传成功')
 }
 
 // 表单验证规则
@@ -270,7 +279,7 @@ const handleDelete = (row, index) => {
   <el-dialog
     :model-value="visible"
     @update:model-value="emit('update:visible', $event)"
-    :title="formData.drugName ? '编辑药品' : '新增药品'"  
+    :title="isEditMode ? '编辑药品' : '新增药品'"  
     width="80%"
     :close-on-click-modal="false"
     class="drug-dialog"
@@ -397,25 +406,7 @@ const handleDelete = (row, index) => {
               </el-checkbox-group>
             </el-form-item>
           </el-col>
-          <el-col :span="4">
-            <el-form-item label="图片:" prop="image">
-              <el-upload
-                class="image-uploader"
-                action="/api/upload"
-                :show-file-list="false"
-                :before-upload="beforeImageUpload"
-                :on-success="handleImageSuccess"
-              >
-                <div v-if="formData.image" class="image-preview">
-                  <img :src="formData.image" class="uploaded-image" />
-                </div>
-                <div v-else class="upload-placeholder">
-                  <el-icon class="upload-icon"><Plus /></el-icon>
-                </div>
-              </el-upload>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
+          <el-col :span="12">
             <el-form-item label="贮藏:" prop="storage">
               <el-input v-model="formData.storage" placeholder="请输入贮藏方式" />
             </el-form-item>
@@ -482,6 +473,30 @@ const handleDelete = (row, index) => {
                 </el-select> 
               </template>
             </el-table-column>
+            <el-table-column label="图片" align="center" prop="image" width="80">
+              <template #default="{ row }">
+                <div class="image-cell">
+                  <el-upload
+                    class="row-image-uploader"
+                    action="/api/upload"
+                    :show-file-list="false"
+                    :before-upload="beforeImageUpload"
+                    :on-success="(res) => handleRowImageSuccess(res, row)"
+                  >
+                    <div v-if="row.image" class="image-preview" @click.stop="previewImage(row.image)">
+                      <img :src="row.image" class="uploaded-image" />
+                      <div class="image-overlay">
+                        <el-icon><ZoomIn /></el-icon>
+                      </div>
+                    </div>
+                    <div v-else class="upload-placeholder">
+                      <el-icon class="upload-icon"><Plus /></el-icon>
+                    </div>
+                  </el-upload>
+                  <el-icon v-if="row.image" class="delete-image-icon" @click="row.image = ''"><CircleClose /></el-icon>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column align="center" label="操作" width="60">
               <template #default="{ row, $index }">
                 <el-button type="danger" link @click="handleDelete(row, $index)">删除</el-button>
@@ -495,7 +510,7 @@ const handleDelete = (row, index) => {
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button @click="handleResetinfo">重置</el-button>
-        <el-button type="primary" @click="handleSubmit" v-if="!formData.drugName">确定</el-button>
+        <el-button type="primary" @click="handleSubmit" v-if="!isEditMode">确定</el-button>
         <el-button type="success" @click="handleSubmitEdit" v-else>保存</el-button>
       </div>
     </template>
@@ -604,6 +619,101 @@ const handleDelete = (row, index) => {
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+  }
+}
+
+// 表格内图片上传样式
+.image-cell {
+  position: relative;
+  display: inline-block;
+
+  .row-image-uploader {
+    display: inline-block;
+
+    .upload-placeholder {
+      width: 50px;
+      height: 50px;
+      border: 1px dashed #d9d9d9;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background-color: #fafafa;
+
+      &:hover {
+        border-color: #409eff;
+        background-color: #f0f9ff;
+      }
+
+      .upload-icon {
+        font-size: 16px;
+        color: #8c939d;
+      }
+    }
+
+    .image-preview {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s;
+
+      &:hover {
+        border-color: #409eff;
+
+        .image-overlay {
+          opacity: 1;
+        }
+      }
+
+      .uploaded-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+
+        .el-icon {
+          color: #fff;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .delete-image-icon {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 14px;
+    color: #f56c6c;
+    cursor: pointer;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: all 0.3s;
+
+    &:hover {
+      color: #ff4d4f;
+      transform: scale(1.1);
     }
   }
 }

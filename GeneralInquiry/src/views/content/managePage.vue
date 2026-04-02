@@ -3,20 +3,37 @@
 import { ref, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import NewAddDrugs from './components/newadddrugs.vue'
-import { drugListService, drugDeleteService } from '@/api/drug.js'
+import { drugPageService, drugDeleteService } from '@/api/drug.js'
 
 // 表格数据
 const tableData = ref([])
-// 原始全量数据（用于搜索）
-const originalTableData = ref([])
+const total = ref(0)
 
-// 获取药品列表数据
+// 分页数据
+const params = ref({
+  pagenum: 1,
+  pagesize: 10,
+  cate_id: '',
+  state: ''
+})
+
+// 搜索关键字
+const searchKeyword = ref('')
+
+// 新增药品弹窗
+const newAddDrugsVisible = ref(false)
+// 编辑数据
+const editRowData = ref(null)
+
+// 获取药品列表数据（分页）
 const getDrugList = async () => {
-  const res = await drugListService()
-  originalTableData.value = res.data || []
-  tableData.value = res.data || []
-  // 总条数
-  total.value = tableData.value.length
+  const res = await drugPageService({
+    pageNum: params.value.pagenum,
+    pageSize: params.value.pagesize,
+    keyword: searchKeyword.value
+  })
+  tableData.value = res.data?.list || res.data?.data || []
+  total.value = res.data?.total || res.data?.totalCount || 0
 }
 
 // 页面加载时获取数据
@@ -24,71 +41,57 @@ onMounted(() => {
   getDrugList()
 })
 
+// 分页大小变化
+const handleSizeChange = (val) => {
+  params.value.pagesize = val
+  params.value.pagenum = 1
+  getDrugList()
+}
 
-// 新增药品弹窗
-const newAddDrugsVisible = ref(false)
-// 编辑数据
-const editRowData = ref(null)
+// 页码变化
+const handleCurrentChange = (val) => {
+  params.value.pagenum = val
+  getDrugList()
+}
 
-const total = ref(0)         //总条数数据
-// 分页数据
-const params = ref({
- pagenum:1,
- pagesize:5,
- cate_id:'',
- state:''
-})
-
-const searchKeyword = ref('') // 搜索关键字
 // 搜索
 const handleSearch = () => {
-  const keyword = searchKeyword.value.trim().toLowerCase()
-  if (!keyword) {
-    tableData.value = originalTableData.value
-  } else {
-    tableData.value = originalTableData.value.filter(item => {
-      return (
-        (item.drugName && item.drugName.toLowerCase().includes(keyword)) ||
-        (item.commonName && item.commonName.toLowerCase().includes(keyword)) ||
-        (item.category && item.category.toLowerCase().includes(keyword)) ||
-        (item.indications && item.indications.toLowerCase().includes(keyword))
-      )
-    })
-  }
-  total.value = tableData.value.length
+  params.value.pagenum = 1
+  getDrugList()
 }
+
 // 重置搜索
 const handleReset = () => {
   searchKeyword.value = ''
-  tableData.value = originalTableData.value
-  total.value = tableData.value.length
+  params.value.pagenum = 1
+  getDrugList()
 }
-
 
 // 新增药品
 const handleAdd = () => {
   newAddDrugsVisible.value = true
 }
+
 // 编辑药品
 const handleEdit = (row) => {
   editRowData.value = { ...row }
   newAddDrugsVisible.value = true
 }
+
 // 删除药品
 const handleDelete = async (row) => {
-  // 确认删除
   const confirm = await ElMessageBox.confirm('确认删除吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
   if (!confirm) return
-  
+
   const res = await drugDeleteService(row.id)
-  if(res.code === 200){
+  if (res.code === 200) {
     ElMessage.success('删除成功')
     getDrugList()
-  }else{
+  } else {
     ElMessage.error(res.msg || '删除失败')
   }
 }
@@ -98,7 +101,6 @@ const handleSubmitAdd = () => {
   getDrugList()
   editRowData.value = null
 }
-
 </script>
 
 <template>
@@ -121,10 +123,10 @@ const handleSubmitAdd = () => {
         <el-icon><Plus /></el-icon>
         新增
       </el-button>
-    </div>  
+    </div>
     <!-- 内容 -->
     <div class="content">
-      <!-- 数据表格 -->  
+      <!-- 数据表格 -->
       <div class="table-container">
         <el-table :data="tableData" style="width: 100%" class="collect-table">
           <el-table-column label="药品名称" min-width="120" prop="drugName" />
@@ -153,14 +155,14 @@ const handleSubmitAdd = () => {
       </div>
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="params.pagenum"
-        v-model:page-size="params.pagesize"
+        :current-page="params.pagenum"
+        :page-size="params.pagesize"
         :page-sizes="[10, 20, 50, 100]"
-        :size="small"
         :background="true"
-        small
-        layout="total, jumper,sizes, prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
         :total="total"
+        @update:current-page="handleCurrentChange"
+        @update:page-size="handleSizeChange"
         style="justify-content: flex-end;margin-top: 20px"
       />
     </div>
@@ -256,48 +258,24 @@ const handleSubmitAdd = () => {
 .table-container {
   background-color: #fff;
   border-radius: 8px;
-  flex: 1;
-  margin-bottom: 20px;
-  .collect-table {
-    :deep(.el-table__header) {
-      th {
-        background-color: #f8f9fa;
-        color: #666;
-        font-weight: 500;
-        font-size: 14px;
-      }
+}
+// 操作按钮
+.operation-btns {
+  display: flex;
+  gap: 15px;
+  .view-btn {
+    color: #4facfe;
+    cursor: pointer;
+    &:hover {
+      color: #5ee7df;
     }
-    :deep(.el-table__row) {
-      td {
-        padding: 15px 0;
-        font-size: 14px;
-        color: #333;
-      }
-    }
-    .operation-btns {
-      display: flex;
-      gap: 15px;
-      .view-btn {
-        color: #409EFF;
-        cursor: pointer;
-        font-size: 14px;
-
-        &:hover {
-          color: #4facfe;
-        }
-      }
-
-      .delete-btn {
-        color: #f56c6c;
-        cursor: pointer;
-        font-size: 14px;
-
-        &:hover {
-          color: #f78989;
-        }
-      }
+  }
+  .delete-btn {
+    color: #ff6b6b;
+    cursor: pointer;
+    &:hover {
+      color: #ff4757;
     }
   }
 }
-
 </style>
