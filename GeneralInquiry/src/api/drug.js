@@ -19,3 +19,7 @@ export const drugDeleteService = (id) => {
 // 分页查询药品接口
 export const drugPageService = (params) => {
   return request({url: '/drug/page',method: 'get', params})}
+
+// 分页查询厂家信息接口（已展开主子表）
+export const drugInfoPageService = (params) => {
+  return request({url: '/drug/info/page',method: 'get', params})}

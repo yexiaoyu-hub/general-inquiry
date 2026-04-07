@@ -69,6 +69,7 @@ const handleReset = () => {
 
 // 新增药品
 const handleAdd = () => {
+  editRowData.value = null
   newAddDrugsVisible.value = true
 }
 

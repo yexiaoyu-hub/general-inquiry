@@ -18,16 +18,14 @@ const emit = defineEmits(['update:visible', 'toggle-favorite'])
 
 const isFavorite = ref(false)
 
+// 监听药品数据变化，更新收藏状态
 watch(() => props.drugData, (newVal) => {
   if (newVal) {
     isFavorite.value = newVal.isFavorite || false
   }
 }, { immediate: true })
 
-const handleClose = () => {
-  emit('update:visible', false)
-}
-
+// 切换收藏状态
 const handleToggleFavorite = () => {
   isFavorite.value = !isFavorite.value
   emit('toggle-favorite', props.drugData)
@@ -37,6 +35,10 @@ const handleCopy = (text) => {
   navigator.clipboard.writeText(text).then(() => {
     ElMessage.success('复制成功')
   })
+}
+
+const handleClose = () => {
+  emit('update:visible', false)
 }
 </script>
 
@@ -54,21 +56,26 @@ const handleCopy = (text) => {
           <span class="section-title">基本信息</span>
         </div>
         <div class="drug-header">
-          <img :src="drugData.image" alt="药品图片" class="drug-image" />
+          <img :src="drugData.image" class="drug-image" />
           <div class="drug-title-info">
             <div class="drug-name-row">
-              <span class="drug-name">{{ drugData.name }}</span>
-              <span v-if="drugData.subName" class="drug-subname">{{ drugData.subName }}</span>
+              <span class="drug-name">{{ drugData.drugName }}</span>
+              <span v-if="drugData.commonName" class="drug-subname">{{ drugData.commonName }}</span>
             </div>
             <div class="drug-enc">
-              <span>ENC: {{ drugData.ENC }}</span>
-              <el-icon class="copy-icon" @click="handleCopy(drugData.ENC)">
+              <span>ENC: {{ drugData.drugCode }}</span>
+              <el-icon class="copy-icon" @click="handleCopy(drugData.drugCode)">
                 <CopyDocument />
               </el-icon>
             </div>
-            <div class="category-tags">
-              <span class="tag green">{{ drugData.category }}</span>
-              <span class="tag blue">西药医保</span>
+            <div class="type-tags">
+              <span
+                v-for="(type, index) in (drugData.drugTypesStr ? drugData.drugTypesStr.split(',') : [])"
+                :key="index"
+                class="tag green"
+              >
+                {{ type.trim() }}
+              </span>
             </div>
           </div>
         </div>
@@ -110,13 +117,13 @@ const handleCopy = (text) => {
             </div>
             <div class="info-item">
               <span class="info-label">药品分类</span>
-              <span class="info-value">{{ drugData.drugClassification }}</span>
+              <span class="info-value">{{ drugData.category }}</span>
             </div>
           </div>
           <div class="info-row">
             <div class="info-item">
               <span class="info-label">用药类型</span>
-              <span class="info-value">{{ drugData.drugType }}</span> 
+              <span class="info-value">{{ drugData.medicationType }}</span> 
             </div>
           </div>
         </div>
@@ -139,7 +146,7 @@ const handleCopy = (text) => {
           <div class="info-block">
             <div class="info-block-title">成分</div>
             <div class="info-block-text">
-              {{ drugData.ingredients || '尚不明确' }}
+              {{ drugData.composition || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
@@ -151,40 +158,37 @@ const handleCopy = (text) => {
           <div class="info-block">
             <div class="info-block-title">适应症</div>
             <div class="info-block-text">
-              用于外感病，邪犯少阳证，症见寒热往来、胸胁苦满、食欲不振、心烦喜呕、口苦咽干。
+              {{ drugData.indications || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
             <div class="info-block-title">用法用量</div>
             <div class="info-block-text">
-              开水冲服。一次1袋，一日3次。
+              {{ drugData.usageDosage || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
             <div class="info-block-title">不良反应</div>
             <div class="info-block-text">
-              尚不明确。
+              {{ drugData.adverseReaction || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
             <div class="info-block-title">禁忌</div>
             <div class="info-block-text">
-              尚不明确。
+              {{ drugData.taboo || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
             <div class="info-block-title">注意事项</div>
             <div class="info-block-text">
-              1. 忌烟、酒及辛辣、生冷、油腻食物。<br />
-              2. 不宜在服药期间同时服用滋补性中药。<br />
-              3. 风寒感冒者不适用。<br />
-              4. 糖尿病患者及有高血压、心脏病、肝病、肾病等慢性病严重者应在医师指导下服用。
+              {{ drugData.precautions || '尚不明确' }}
             </div>
           </div>
           <div class="info-block">
             <div class="info-block-title">贮藏</div>
             <div class="info-block-text">
-              密封，置阴凉干燥处。
+              {{ drugData.storage || '尚不明确' }}
             </div>
           </div>
         </div>
@@ -270,14 +274,16 @@ const handleCopy = (text) => {
         }
       }
 
-      .category-tags {
+      .type-tags {
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
 
         .tag {
           padding: 2px 8px;
           border-radius: 4px;
           font-size: 12px;
+          white-space: nowrap;
 
           &.green {
             background-color: #e8f9f0;

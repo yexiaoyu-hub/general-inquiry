@@ -3,8 +3,7 @@
 import { ref, watch, computed } from 'vue'
 import { Plus, CirclePlus, ZoomIn, CircleClose } from '@element-plus/icons-vue'
 import { drugAddService, drugUpdateService } from '@/api/drug.js'
-
-
+import { DRUG_CATEGORY_OPTIONS, DRUG_TYPE_OPTIONS } from '@/constants/drugConstants.js'
 
 
 // 定义 props
@@ -114,13 +113,7 @@ const medicationTypeOptions = [
   { label: '非处方药', value: '非处方药' },
   { label: '处方药', value: '处方药' }
 ]
-// 分类选项
-const categoryOptions = [
-  { label: '西药', value: '西药' },
-  { label: '中成药', value: '中成药' },
-  { label: '中草药', value: '中草药' },
-  { label: '自制剂', value: '自制剂' }
-]
+
 //包装材质选项
 const packageMaterialOptions = [
   { label: '塑料', value: '塑料' },
@@ -129,21 +122,9 @@ const packageMaterialOptions = [
   { label: '纸类/复合膜', value: '纸类/复合膜' },
   { label: '其他', value: '其他' }
 ]
-//药品类别选项
-const drugCategoryOptions = [
-  { label: '抗感染类', value: '抗感染类' },
-  { label: '心血管系统类', value: '心血管系统类' },
-  { label: '消化系统类', value: '消化系统类' }, 
-  { label: '呼吸系统类', value: '呼吸系统类' } ,
-  { label: '神经系统类', value: '神经系统类' }, 
-  { label: '内分泌及代谢类', value: '内分泌及代谢类' },
-  { label: '泌尿系统类', value: '泌尿系统类' }, 
-  { label: '血液系统类', value: '血液系统类' }, 
-  { label: '抗肿瘤类', value: '抗肿瘤类' },
-  { label: '维生素/营养类', value: '维生素/营养类' },
-  { label: '外用药', value: '外用药' },
-  { label: '麻醉/精神类', value: '麻醉/精神类' }
-]
+
+const drugCategoryOptions = DRUG_CATEGORY_OPTIONS.filter(item => item.value !== '')// 药品类别选项
+const categories = DRUG_TYPE_OPTIONS // 分类标签
 
 // 关闭弹窗
 const handleClose = () => {
@@ -343,7 +324,7 @@ const handleDelete = (row, index) => {
             <el-form-item label="分类:" prop="category">
               <el-select v-model="formData.category" placeholder="请选择" style="width: 100%">
                 <el-option
-                  v-for="item in categoryOptions"
+                  v-for="item in categories"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"

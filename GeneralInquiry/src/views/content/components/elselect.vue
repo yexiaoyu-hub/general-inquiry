@@ -13,19 +13,23 @@ defineProps({
 const emit = defineEmits(['update:modelValue'])
 const Channellist = ref([
     {
-        id: '1',
+        id: 'all',
+        cate_name: '全部'
+    },
+    {
+        id: 'xiyao',
         cate_name: '西药'
     },
     {
-        id: '2',
+        id: 'zhongchengyao',
         cate_name: '中成药'
     },
     {
-        id: '3',
+        id: 'zhongcaoyao',
         cate_name: '中草药'
     },
     {
-        id: '4',
+        id: 'zizhiji',
         cate_name: '自制剂'
     }
 ])
@@ -45,7 +49,7 @@ const Channellist = ref([
     <el-select placeholder="请选择分类" 
                     :modelValue="modelValue"
                     @update:modelValue="emit('update:modelValue', $event)"
-                    :style="{ width }"
+                    :style="{ width: width || '100%' }"
                 >
       <el-option v-for="Channel in Channellist" 
                 :key="Channel.id" 

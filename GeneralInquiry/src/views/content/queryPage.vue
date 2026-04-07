@@ -1,64 +1,87 @@
 // 药品查询页面
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Search, ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
-import elSelect from './components/elselect.vue'
 import infoCard from './components/infoCard.vue'
+import { drugInfoPageService } from '@/api/drug.js'
+import { DRUG_CATEGORY_OPTIONS, DRUG_TYPE_OPTIONS } from '@/constants/drugConstants.js'
+
+const categories = DRUG_TYPE_OPTIONS // 分类标签
+const drugCategoryOptions = DRUG_CATEGORY_OPTIONS // 药品类别选项
 
 // 搜索关键词
 const searchKeyword = ref('')
 
-// 分类标签
-const categories = [
-  { label: '全部', value: 'all' },
-  { label: '西药', value: 'xiyao' },
-  { label: '中成药', value: 'zhongchengyao' },
-  { label: '中草药', value: 'zhongcaoyao' },
-  { label: '自制剂', value: 'zizhiji' }
-]
-
 // 当前选中的分类
-const activeCategory = ref('all')
+const activeCategory = ref('')
 
-// 表格数据
-const tableData = ref([
-  {
-    id: '1',
-    ENC: '86904340000721',
-    name: '小柴胡颗粒',
-    subName: '（小柴胡）',
-    manufacturer: '广西恒拓集团仁盛制药有限公司',
-    approvalNumber: '国药准字H20013082',
-    specification: '10g * 10袋',
-    dosageForm: '颗粒剂',
-    category: '中成药',
-    image: 'https://element-plus.org/images/element-plus-logo.svg'
-  },
-  {
-    id: '2',
-    ENC: '86904340000722',
-    name: '阿莫西林胶囊',
-    subName: '',
-    manufacturer: '华北制药股份有限公司',
-    approvalNumber: '国药准字H13020766',
-    specification: '0.25g * 24粒',
-    dosageForm: '胶囊剂',
-    category: '西药',
-    image: 'https://via.placeholder.com/60x60/f5f5f5/999?text=药品'
-  },
-  {
-    id: '3',
-    ENC: '86904340000723',
-    name: '板蓝根颗粒',
-    subName: '',
-    manufacturer: '广州白云山制药厂',
-    approvalNumber: '国药准字Z44023485',
-    specification: '10g * 20袋',
-    dosageForm: '颗粒剂',
-    category: '中成药',
-    image: 'https://via.placeholder.com/60x60/f5f5f5/999?text=药品'
+// 选中的药品类别
+const selectedDrugType = ref('')
+
+// 表格数据（扁平化）
+const tableData = ref([])
+const total = ref(0)
+
+// 分页参数
+const params = ref({
+  pageNum: 1,
+  pageSize: 10
+})
+
+// 获取药品列表数据（使用厂家分页接口，已展开子表）
+const getDrugList = async () => {
+  const queryParams = {
+    pageNum: params.value.pageNum,
+    pageSize: params.value.pageSize,
+    keyword: searchKeyword.value || undefined
   }
-])
+  
+  // 添加药品细分类别筛选参数（下拉框选择）
+  if (selectedDrugType.value) {
+    queryParams.category = selectedDrugType.value
+  }
+  
+  // 添加药品大类筛选参数（按钮选择：西药/中成药/中草药/自制剂）
+  if (activeCategory.value) {
+    queryParams.drugCategory = activeCategory.value
+  }
+  
+  const res = await drugInfoPageService(queryParams)
+  tableData.value = res.data?.list || res.data?.data || []
+  total.value = res.data?.total || res.data?.totalCount || 0
+}
+
+// 分页大小变化
+const handleSizeChange = (val) => {
+  params.value.pageSize = val
+  params.value.pageNum = 1
+  getDrugList()
+}
+
+// 页码变化
+const handleCurrentChange = (val) => {
+  params.value.pageNum = val
+  getDrugList()
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  getDrugList()
+})
+
+// 搜索
+const handleSearch = () => {
+  getDrugList()
+}
+
+// 重置
+const handleReset = () => {
+  searchKeyword.value = ''
+  activeCategory.value = ''
+  selectedDrugType.value = ''
+  params.value.pageNum = 1
+  getDrugList()
+}
 
 // 收藏列表
 const favorites = ref([])
@@ -68,17 +91,8 @@ const currentDrug = ref({})
 
 const handleCategoryChange = (value) => {
   activeCategory.value = value
-}
-
-// 搜索
-const handleSearch = () => {
-  console.log('搜索:', searchKeyword.value)
-}
-
-// 重置
-const handleReset = () => {
-  searchKeyword.value = ''
-  activeCategory.value = 'all'
+  params.value.pageNum = 1
+  getDrugList()
 }
 
 // 切换收藏
@@ -96,17 +110,30 @@ const isFavorite = (ENC) => {
   return favorites.value.includes(ENC)
 }
 
+// 点击行显示详情
 const handleRowClick = (row) => {
   currentDrug.value = {
     ...row,
-    isFavorite: isFavorite(row.ENC)
+    isFavorite: isFavorite(row.drugCode)
   }
   drawerVisible.value = true
 }
 
+// 切换收藏状态
 const handleToggleFavorite = (drug) => {
   toggleFavorite(drug)
-  currentDrug.value.isFavorite = isFavorite(drug.ENC)
+  currentDrug.value.isFavorite = isFavorite(drug.drugCode)
+}
+
+// 根据分类获取样式类名
+const getCategoryClass = (category) => {
+  const categoryMap = {
+    '西药': 'blue',
+    '中成药': 'green',
+    '中草药': 'orange',
+    '自制剂': 'purple'
+  }
+  return categoryMap[category] || 'green'
 }
 </script>
 
@@ -121,10 +148,23 @@ const handleToggleFavorite = (drug) => {
           placeholder="搜索药品"
           class="search-input"
           clearable
+          @keyup.enter="handleSearch"
         />
       </div>
       <el-form-item class="category-select" label="选择类别">
-        <elselect v-model="activeCategory" width="120px"></elselect>
+        <el-select
+          v-model="selectedDrugType"
+          placeholder="请选择类别"
+          style="width: 150px;"
+          @change="handleSearch"
+        >
+          <el-option
+            v-for="item in drugCategoryOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
       <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
       <el-button class="reset-btn" @click="handleReset">重置</el-button>
@@ -143,17 +183,29 @@ const handleToggleFavorite = (drug) => {
           {{ cat.label }}
         </el-button>
       </div> 
-      <!-- 数据表格 -->  
-      <el-table :data="tableData" style="width: 100%" class="drug-table" @row-click="handleRowClick">
+      <!-- 数据表格 -->
+      <el-table
+        :data="tableData"
+        style="width: 100%"
+        class="drug-table"
+        @row-click="handleRowClick"
+      >
         <el-table-column label="药品名称" min-width="200">
           <template #default="{ row }">
             <div class="drug-info">
               <img :src="row.image" alt="药品图片" class="drug-image" />
               <div class="drug-detail">
-                <div class="drug-name">{{ row.name }}</div>
-                <div v-if="row.subName" class="drug-subname">{{ row.subName }}</div>
-                <div class="drug-id">ENC: {{ row.ENC }}</div>
+                <div class="drug-name">{{ row.drugName }}</div>
+                <div v-if="row.commonName" class="drug-type">（{{ row.commonName }}）</div>
+                <div class="drug-id">ENC: {{ row.drugCode }}</div>
               </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="分类" min-width="80">
+          <template #default="{ row }">
+            <div class="category-tags-cell">
+              <span :class="['tag', getCategoryClass(row.category)]">{{ row.category }}</span>
             </div>
           </template>
         </el-table-column>
@@ -161,26 +213,30 @@ const handleToggleFavorite = (drug) => {
         <el-table-column label="批准文号" min-width="140" prop="approvalNumber" />
         <el-table-column label="规格" min-width="100" prop="specification" />
         <el-table-column label="剂型" min-width="80" prop="dosageForm" />
-        <el-table-column label="类别" min-width="100">
-          <template #default="{ row }">
-            <div class="category-tags-cell">
-              <span class="tag green">{{ row.category }}</span>
-              <span class="tag blue">西药医保</span>
-            </div>
-          </template>
-        </el-table-column>
         <el-table-column label="收藏" width="80" fixed="right">
           <template #default="{ row }">
             <el-icon
-              :class="['favorite-icon', { active: isFavorite(row.ENC) }]"
+              :class="['favorite-icon', { active: isFavorite(row.drugCode) }]"
               @click.stop="toggleFavorite(row)"
             >
-              <StarFilled v-if="isFavorite(row.ENC)" />
+              <StarFilled v-if="isFavorite(row.drugCode)" />
               <Star v-else />
             </el-icon>
           </template>
         </el-table-column>
       </el-table>
+      <!-- 分页 -->
+      <el-pagination
+        :current-page="params.pageNum"
+        :page-size="params.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :background="true"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        @update:current-page="handleCurrentChange"
+        @update:page-size="handleSizeChange"
+        style="justify-content: flex-end; margin-top: 20px"
+      />
     </div>
 
     <infoCard
@@ -233,13 +289,12 @@ const handleToggleFavorite = (drug) => {
   .category-select {
     display: flex;
     align-items: center;
-    gap: 50px;
+    gap: 10px;
     padding: 10px 20px;
     background-color: #fff;
     border-radius: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    color: #666;
     font-size: 14px;
     margin-bottom: 0;
 
@@ -342,7 +397,7 @@ const handleToggleFavorite = (drug) => {
 
     .drug-detail {
       .drug-name {
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 500;
         color: #333;
         margin-bottom: 2px;
@@ -352,6 +407,11 @@ const handleToggleFavorite = (drug) => {
         font-size: 12px;
         color: #999;
         margin-bottom: 2px;
+      }
+
+      .drug-type {
+        font-size: 14px;
+        color: #999;
       }
 
       .drug-id {
@@ -381,6 +441,16 @@ const handleToggleFavorite = (drug) => {
       &.blue {
         background-color: #e3f2fd;
         color: #2196f3;
+      }
+
+      &.orange {
+        background-color: #fff3e0;
+        color: #ff9800;
+      }
+
+      &.purple {
+        background-color: #f3e5f5;
+        color: #9c27b0;
       }
     }
   }
