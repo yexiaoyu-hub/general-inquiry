@@ -11,3 +11,11 @@ export const userLoginService = (data) => {
 // 获取用户信息接口
 export const userGetinfoService = () => {
   return request({url: '/user/info',method: 'get'})}
+
+// 更新用户信息接口
+export const userUpdateService = (data) => {
+  return request({url: '/user/update',method: 'put',data})}
+
+// 修改密码接口
+export const userUpdatePasswordService = (data) => {
+  return request({url: '/user/password',method: 'put',data})}

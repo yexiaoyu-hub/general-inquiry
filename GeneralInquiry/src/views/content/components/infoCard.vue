@@ -11,6 +11,10 @@ const props = defineProps({
   drugData: {
     type: Object,
     default: () => ({})
+  },
+  showFavoriteBtn: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -127,7 +131,7 @@ const handleClose = () => {
             </div>
           </div>
         </div>
-        <div class="action-btns">
+        <div class="action-btns" v-if="showFavoriteBtn">
           <el-button :type="isFavorite ? 'warning' : 'default'" @click="handleToggleFavorite">
             <el-icon>
               <StarFilled v-if="isFavorite" />

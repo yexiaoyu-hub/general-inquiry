@@ -1,55 +1,82 @@
 // 收藏药品页面
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Search, View, Delete } from '@element-plus/icons-vue'
+import infoCard from './components/infoCard.vue'
+import { DRUG_TYPE_OPTIONS, DRUG_CATEGORY_OPTIONS } from '@/constants/drugConstants.js'
+import dayjs from 'dayjs'
+
+// localStorage key
+const FAVORITES_KEY = 'drug_favorites'
 
 // 搜索关键词
 const searchKeyword = ref('')
 
 // 分类数据
-const categories = [
-  { label: '全部', value: 'all', active: true },
-  { label: '西药', value: 'xiyao', active: false },
-  { label: '中成药', value: 'zhongchengyao', active: false },
-  { label: '中草药', value: 'zhongcaoyao', active: false },
-  { label: '自制剂', value: 'zizhiji', active: false }
-]
-
+const categories = DRUG_TYPE_OPTIONS
 // 类别数据
-const indications = [
-  { label: '感冒发烧', value: 'ganmao', active: false },
-  { label: '皮肤疾病', value: 'pifu', active: false },
-  { label: '降压降糖', value: 'jiangya', active: false },
-  { label: '精神类', value: 'jingshen', active: false },
-  { label: '骨科外用', value: 'guke', active: false }
-]
+const indications = DRUG_CATEGORY_OPTIONS
 
 // 当前选中的分类（单选）
-const activeCategory = ref('all')
+const activeCategory = ref('')
 // 当前选中的适应症（多选）
 const activeIndications = ref([])
 
-// 表格数据
-const tableData = ref([
-  {
-    id: '1',
-    name: '小柴胡颗粒',
-    manufacturer: '广西恒拓集团仁盛制药有限公司',
-    approvalNumber: '国药准字H20013062',
-    specification: '10g*10袋',
-    collectTime: '2026-03-10 10:00'
-  },
-  {
-    id: '2',
-    name: '小柴胡颗粒',
-    manufacturer: '广西恒拓集团仁盛制药有限公司',
-    approvalNumber: '国药准字H20013062',
-    specification: '10g*10袋',
-    collectTime: '2026-03-12 09:00'
-  }
-])
+// 原始收藏数据
+const favoritesData = ref([])
+// 搜索关键词（实际用于筛选的值）
+const searchKeywordFilter = ref('')
 
-const total = ref(0)         //总条数数据
+// 从localStorage加载收藏数据
+const loadFavorites = () => {
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY)
+    if (stored) {
+      favoritesData.value = JSON.parse(stored)
+    }
+  } catch (error) {
+    console.error('加载收藏数据失败:', error)
+  }
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  loadFavorites()
+})
+
+// 过滤后的表格数据
+const tableData = computed(() => {
+  let data = favoritesData.value
+
+  // 根据搜索关键词过滤
+  if (searchKeywordFilter.value) {
+    const keyword = searchKeywordFilter.value.toLowerCase()
+    data = data.filter(item =>
+      item.drugName?.toLowerCase().includes(keyword) ||
+      item.manufacturer?.toLowerCase().includes(keyword) ||
+      item.approvalNumber?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 根据分类过滤（单选）
+  if (activeCategory.value) {
+    data = data.filter(item => item.category === activeCategory.value)
+  }
+
+  // 根据类别过滤（多选）- 排除空字符串（全部类别）
+  const selectedIndications = activeIndications.value.filter(v => v !== '')
+  if (selectedIndications.length > 0) {
+    data = data.filter(item => {
+      const itemTypes = item.drugTypesStr ? item.drugTypesStr.split(',').map(t => t.trim()) : []
+      // 检查是否有交集
+      return selectedIndications.some(selected => itemTypes.includes(selected))
+    })
+  }
+
+  return data
+})
+
+const total = ref(0)  //总条数数据
 // 分页数据
 const params = ref({
  pagenum:1,
@@ -74,17 +101,60 @@ const handleIndicationChange = (value) => {
 
 // 搜索
 const handleSearch = () => {
-  console.log('搜索:', searchKeyword.value)
+  searchKeywordFilter.value = searchKeyword.value
 }
+
+// 重置
+const handleReset = () => {
+  searchKeyword.value = ''
+  searchKeywordFilter.value = ''
+  activeCategory.value = ''
+  activeIndications.value = []
+}
+
+// 抽屉显示状态
+const drawerVisible = ref(false)
+const currentDrug = ref({})
 
 // 查看
 const handleView = (row) => {
-  console.log('查看:', row)
+  currentDrug.value = {
+    ...row,
+    isFavorite: true
+  }
+  drawerVisible.value = true
+}
+
+// 切换收藏（在详情卡片中取消收藏）
+const handleToggleFavorite = (drug) => {
+  // 从数据中移除
+  const index = favoritesData.value.findIndex(item => item.id === drug.id)
+  if (index > -1) {
+    favoritesData.value.splice(index, 1)
+    // 更新localStorage
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesData.value))
+  }
+  // 关闭抽屉
+  drawerVisible.value = false
 }
 
 // 删除
-const handleDelete = (row) => {
-  console.log('删除:', row)
+const handleDelete = async (row) => {
+  const confirm = await ElMessageBox.confirm('确认删除吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  if (!confirm) {
+    return
+  }
+  // 从数据中移除
+  const index = favoritesData.value.findIndex(item => item.id === row.id)
+  if (index > -1) {
+    favoritesData.value.splice(index, 1)
+    // 更新localStorage
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesData.value))
+  }
 }
 
 // 分页变化
@@ -108,6 +178,7 @@ const handleSizeChange = (size) => {
           placeholder="搜索关键字"
           class="search-input"
           clearable
+          @keyup.enter="handleSearch"
         />
       </div>
       <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
@@ -152,11 +223,22 @@ const handleSizeChange = (size) => {
       <!-- 数据表格 -->
       <div class="table-container">
         <el-table :data="tableData" style="width: 100%" class="collect-table">
-          <el-table-column label="名称" min-width="120" prop="name" />
+          <el-table-column label="名称" min-width="120">
+            <template #default="{ row }">
+              <div>
+                <div>{{ row.drugName }}</div>
+                <div v-if="row.commonName" class="common-name">({{ row.commonName }})</div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column label="厂家" min-width="180" prop="manufacturer" />
           <el-table-column label="批准文号" min-width="140" prop="approvalNumber" />
           <el-table-column label="规格" min-width="100" prop="specification" />
-          <el-table-column label="收藏时间" min-width="150" prop="collectTime" />
+          <el-table-column label="收藏时间" min-width="150">
+            <template #default="{ row }">
+              {{ row.collectTime ? dayjs(row.collectTime).format('YYYY-MM-DD HH:mm:ss') : '' }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <div class="operation-btns">
@@ -182,6 +264,14 @@ const handleSizeChange = (size) => {
     </div>
   </div>
   </div>
+
+  <!-- 药品详情卡片 -->
+  <infoCard
+    v-model:visible="drawerVisible"
+    :drug-data="currentDrug"
+    :show-favorite-btn="false"
+    @toggle-favorite="handleToggleFavorite"
+  />
 </template>
 
 <style scoped lang="scss">

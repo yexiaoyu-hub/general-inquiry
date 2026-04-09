@@ -1,6 +1,6 @@
 // 药品类别字典
 export const DRUG_CATEGORY_OPTIONS = [
-  { label: '全部类别', value: '' },
+  // { label: '全部类别', value: '' },
   { label: '抗感染类', value: '抗感染类' },
   { label: '心血管系统类', value: '心血管系统类' },
   { label: '消化系统类', value: '消化系统类' },

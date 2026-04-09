@@ -1,18 +1,48 @@
 // 用户信息页面
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { User, Lock, DataLine, Edit, Upload } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/index'
+import { userUpdateService, userUpdatePasswordService } from '@/api/user.js'
+import dayjs from 'dayjs'
 
+const userStore = useUserStore()
 const activeTab = ref('userInfo')
 
+// 用户信息
 const userInfo = ref({
-  name: '张三',
-  phone: '18312345678',
-  email: 'zhangsan@example.com',
+  username: '',
+  nickname: '',
+  phone: '',
+  email: '',
   avatar: '',
-  createTime: '2024-01-15 10:30:00'
+  createTime: ''
 })
 
+// 格式化日期时间
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return ''
+  return dayjs(dateStr).format('YYYY-MM-DD HH:mm:ss')
+}
+
+// 获取用户信息
+const fetchUserInfo = async () => {
+  await userStore.getuser()
+  const data = userStore.userinfo
+  userInfo.value = {
+    username: data.username || '',
+    nickname: data.nickname || '',
+    phone: data.phone || '',
+    email: data.email || '',
+    avatar: data.avatar || '',
+    createTime: formatDateTime(data.createTime)
+  }
+}
+onMounted(() => {
+  fetchUserInfo()
+})
+
+const accountFormRef = ref(null)
 const accountForm = ref({
   oldPassword: '',
   newPassword: '',
@@ -28,15 +58,32 @@ const otherData = ref({
 const isEditing = ref(false)
 const editForm = ref({})
 
+// 编辑用户信息
 const handleEdit = () => {
   isEditing.value = true
   editForm.value = { ...userInfo.value }
 }
 
-const handleSave = () => {
-  userInfo.value = { ...editForm.value }
-  isEditing.value = false
-  ElMessage.success('保存成功')
+// 更新用户信息
+const handleSave = async () => {
+  try {
+    const res = await userUpdateService({
+      nickname: editForm.value.nickname,
+      phone: editForm.value.phone,
+      email: editForm.value.email
+    })
+    if (res.code === 200) {
+      userInfo.value = { ...editForm.value }
+      isEditing.value = false
+      ElMessage.success('更新成功')
+      // 更新 store 中的用户信息
+      await userStore.getuser()
+    } else {
+      ElMessage.error(res.msg || '更新失败')
+    }
+  } catch (error) {
+    ElMessage.error('更新失败') 
+  }
 }
 
 const handleCancel = () => {
@@ -47,31 +94,64 @@ const handleAvatarUpload = () => {
   ElMessage.info('头像上传功能待实现')
 }
 
-const handleChangePassword = () => {
-  if (!accountForm.value.oldPassword || !accountForm.value.newPassword) {
-    ElMessage.warning('请填写完整信息')
-    return
-  }
-  if (accountForm.value.newPassword !== accountForm.value.confirmPassword) {
-    ElMessage.error('两次密码输入不一致')
-    return
-  }
-  ElMessage.success('密码修改成功')
+// 密码校验规则
+const rules = {
+  oldPassword: [
+    { required: true, message: '请输入原密码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 12, message: '密码长度必须在6到12位之间', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: (rule, value, callback) => {
+      if (value !== accountForm.value.newPassword) {
+        callback(new Error('两次密码输入不一致'))
+      } else {
+        callback()
+      }
+    }, trigger: 'blur' }
+  ]
+}
+
+// 修改密码
+const handleChangePassword = async () => {
+  if (!accountFormRef.value) return
+  
+  accountFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const res = await userUpdatePasswordService({
+          oldPassword: accountForm.value.oldPassword,
+          newPassword: accountForm.value.newPassword
+        })
+        if (res.code === 200) {
+          ElMessage.success('密码修改成功')
+          handleResetPassword()
+        } else {
+          ElMessage.error(res.msg || '密码修改失败')
+        }
+      } catch (error) {
+        ElMessage.error('密码修改失败')
+      }
+    }
+  })
+}
+
+// 重置密码表单
+const handleResetPassword = () => {
   accountForm.value = {
     oldPassword: '',
     newPassword: '',
     confirmPassword: ''
   }
+  accountFormRef.value?.resetFields()
 }
 </script>
 
 <template>
   <div class="user-info">
-    <div class="user-info-header">
-      <div class="user-info-header-left">
-        <div class="user-info-header-left-title">个人中心</div>
-      </div>
-    </div>
     <div class="user-info-content">
       <el-tabs v-model="activeTab" tab-position="left" class="user-tabs">
         <el-tab-pane label="用户信息" name="userInfo">
@@ -99,20 +179,23 @@ const handleChangePassword = () => {
                   更换头像
                 </el-button>
               </div>
-              <el-form label-width="80px" class="info-form">
-                <el-form-item label="用户名">
-                  <el-input v-if="isEditing" v-model="editForm.name" placeholder="请输入用户名" />
-                  <span v-else class="info-value">{{ userInfo.name }}</span>
+              <el-form label-width="100px" class="info-form">
+                <el-form-item label="用户名：">
+                  <span class="info-value">{{ userInfo.username }}</span>
                 </el-form-item>
-                <el-form-item label="手机号">
-                  <el-input v-if="isEditing" v-model="editForm.phone" placeholder="请输入手机号" />
-                  <span v-else class="info-value">{{ userInfo.phone }}</span>
+                <el-form-item label="昵称：">
+                  <el-input v-if="isEditing" v-model="editForm.nickname" placeholder="请输入昵称" />
+                  <span v-else class="info-value">{{ userInfo.nickname }}</span>
                 </el-form-item>
-                <el-form-item label="邮箱">
+                <el-form-item label="邮箱：">
                   <el-input v-if="isEditing" v-model="editForm.email" placeholder="请输入邮箱" />
                   <span v-else class="info-value">{{ userInfo.email }}</span>
                 </el-form-item>
-                <el-form-item label="注册时间">
+                <el-form-item label="手机号：">
+                  <el-input v-if="isEditing" v-model="editForm.phone" placeholder="请输入手机号" />
+                  <span v-else class="info-value">{{ userInfo.phone }}</span>
+                </el-form-item>
+                <el-form-item label="注册时间：">
                   <span class="info-value">{{ userInfo.createTime }}</span>
                 </el-form-item>
                 <el-form-item v-if="isEditing">
@@ -136,41 +219,33 @@ const handleChangePassword = () => {
               <div class="card-header">
                 <span class="card-title">修改密码</span>
               </div>
-              <el-form :model="accountForm" label-width="100px" class="account-form">
-                <el-form-item label="当前密码">
-                  <el-input v-model="accountForm.oldPassword" type="password" disabled />
+              <el-form ref="accountFormRef" :model="accountForm" :rules="rules" label-width="100px" class="account-form">
+                <el-form-item label="原密码" prop="oldPassword">
+                  <el-input 
+                    v-model="accountForm.oldPassword" 
+                    type="password" 
+                    placeholder="请输入原密码" 
+                    show-password />
                 </el-form-item>
-                <el-form-item label="新密码">
-                  <el-input v-model="accountForm.newPassword" type="password" placeholder="请输入新密码" show-password />
+                <el-form-item label="新密码" prop="newPassword">
+                  <el-input 
+                    v-model="accountForm.newPassword" 
+                    type="password" 
+                    placeholder="请输入新密码" 
+                    show-password />
                 </el-form-item>
-                <el-form-item label="确认密码">
-                  <el-input v-model="accountForm.confirmPassword" type="password" placeholder="请再次输入新密码" show-password />
+                <el-form-item label="确认密码" prop="confirmPassword">
+                  <el-input 
+                    v-model="accountForm.confirmPassword" 
+                    type="password" 
+                    placeholder="请再次输入新密码" 
+                    show-password />
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="handleChangePassword">确认修改</el-button>
+                  <el-button type="info" @click="handleResetPassword">重置</el-button>
                 </el-form-item>
               </el-form>
-            </div>
-            <div class="info-card">
-              <div class="card-header">
-                <span class="card-title">账号绑定</span>
-              </div>
-              <div class="bind-list">
-                <div class="bind-item">
-                  <div class="bind-left">
-                    <span class="bind-label">手机绑定</span>
-                    <span class="bind-value">{{ userInfo.phone }}</span>
-                  </div>
-                  <el-button type="primary" text>更换</el-button>
-                </div>
-                <div class="bind-item">
-                  <div class="bind-left">
-                    <span class="bind-label">邮箱绑定</span>
-                    <span class="bind-value">{{ userInfo.email || '未绑定' }}</span>
-                  </div>
-                  <el-button type="primary" text>{{ userInfo.email ? '更换' : '绑定' }}</el-button>
-                </div>
-              </div>
             </div>
           </div>
         </el-tab-pane>
@@ -239,19 +314,6 @@ const handleChangePassword = () => {
 .user-info {
   background-color: #f5f5f5;
   min-height: 100%;
-
-  .user-info-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    .user-info-header-left-title {
-      font-size: 22px;
-      font-weight: 600;
-      color: #333;
-    }
-  }
 
   .user-info-content {
     background-color: #fff;
@@ -349,11 +411,12 @@ const handleChangePassword = () => {
   .info-value {
     color: #606266;
     font-size: 14px;
+    margin-right: 10px;
   }
 }
 
 .account-form {
-  max-width: 400px;
+  max-width: 500px;
 }
 
 .bind-list {

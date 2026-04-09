@@ -28,6 +28,9 @@ const params = ref({
   pageSize: 10
 })
 
+// localStorage key
+const FAVORITES_KEY = 'drug_favorites'
+
 // 获取药品列表数据（使用厂家分页接口，已展开子表）
 const getDrugList = async () => {
   const queryParams = {
@@ -41,7 +44,7 @@ const getDrugList = async () => {
     queryParams.category = selectedDrugType.value
   }
   
-  // 添加药品大类筛选参数（按钮选择：西药/中成药/中草药/自制剂）
+  // 添加药品大类筛选参数
   if (activeCategory.value) {
     queryParams.drugCategory = activeCategory.value
   }
@@ -67,7 +70,34 @@ const handleCurrentChange = (val) => {
 // 页面加载时获取数据
 onMounted(() => {
   getDrugList()
+  // 从localStorage加载收藏列表
+  loadFavoritesFromStorage()
 })
+
+// 从localStorage加载收藏列表
+const loadFavoritesFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY)
+    if (stored) {
+      const favoritesData = JSON.parse(stored)
+      favorites.value = favoritesData.map(item => item.id)
+    } else {
+      favorites.value = []
+    }
+  } catch (error) {
+    console.error('加载收藏数据失败:', error)
+    favorites.value = []
+  }
+}
+
+// 保存收藏列表到localStorage
+const saveFavoritesToStorage = (favoritesData) => {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesData))
+  } catch (error) {
+    console.error('保存收藏数据失败:', error)
+  }
+}
 
 // 搜索
 const handleSearch = () => {
@@ -83,12 +113,13 @@ const handleReset = () => {
   getDrugList()
 }
 
-// 收藏列表
-const favorites = ref([])
-
 const drawerVisible = ref(false)
 const currentDrug = ref({})
 
+// 收藏列表
+const favorites = ref([])
+
+// 分类选择变化
 const handleCategoryChange = (value) => {
   activeCategory.value = value
   params.value.pageNum = 1
@@ -97,24 +128,53 @@ const handleCategoryChange = (value) => {
 
 // 切换收藏
 const toggleFavorite = (row) => {
-  const index = favorites.value.indexOf(row.ENC)
+  const index = favorites.value.indexOf(row.id)
   if (index > -1) {
+    // 取消收藏
     favorites.value.splice(index, 1)
   } else {
-    favorites.value.push(row.ENC)
+    // 添加收藏
+    favorites.value.push(row.id)
+  }
+  // 更新localStorage中的完整数据
+  updateFavoritesStorage(row)
+}
+
+// 更新localStorage中的收藏数据
+const updateFavoritesStorage = (row) => {
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY)
+    let favoritesData = stored ? JSON.parse(stored) : []
+
+    const existingIndex = favoritesData.findIndex(item => item.id === row.id)
+
+    if (existingIndex > -1) {
+      // 已存在则移除
+      favoritesData.splice(existingIndex, 1)
+    } else {
+      // 不存在则添加完整行数据
+      favoritesData.push({
+        ...row,
+        collectTime: new Date().toLocaleString()
+      })
+    }
+
+    saveFavoritesToStorage(favoritesData)
+  } catch (error) {
+    console.error('更新收藏数据失败:', error)
   }
 }
 
 // 判断是否已收藏
-const isFavorite = (ENC) => {
-  return favorites.value.includes(ENC)
+const isFavorite = (id) => {
+  return favorites.value.includes(id)
 }
 
 // 点击行显示详情
 const handleRowClick = (row) => {
   currentDrug.value = {
     ...row,
-    isFavorite: isFavorite(row.drugCode)
+    isFavorite: isFavorite(row.id)
   }
   drawerVisible.value = true
 }
@@ -122,7 +182,7 @@ const handleRowClick = (row) => {
 // 切换收藏状态
 const handleToggleFavorite = (drug) => {
   toggleFavorite(drug)
-  currentDrug.value.isFavorite = isFavorite(drug.drugCode)
+  currentDrug.value.isFavorite = isFavorite(drug.id)
 }
 
 // 根据分类获取样式类名
@@ -156,7 +216,7 @@ const getCategoryClass = (category) => {
           v-model="selectedDrugType"
           placeholder="请选择类别"
           style="width: 150px;"
-          @change="handleSearch"
+          clearable
         >
           <el-option
             v-for="item in drugCategoryOptions"
@@ -216,10 +276,10 @@ const getCategoryClass = (category) => {
         <el-table-column label="收藏" width="80" fixed="right">
           <template #default="{ row }">
             <el-icon
-              :class="['favorite-icon', { active: isFavorite(row.drugCode) }]"
+              :class="['favorite-icon', { active: isFavorite(row.id) }]"
               @click.stop="toggleFavorite(row)"
             >
-              <StarFilled v-if="isFavorite(row.drugCode)" />
+              <StarFilled v-if="isFavorite(row.id)" />
               <Star v-else />
             </el-icon>
           </template>

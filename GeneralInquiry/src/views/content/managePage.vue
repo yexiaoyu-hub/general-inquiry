@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import NewAddDrugs from './components/newadddrugs.vue'
 import { drugPageService, drugDeleteService } from '@/api/drug.js'
+import dayjs from 'dayjs'
 
 // 表格数据
 const tableData = ref([])
@@ -134,14 +135,14 @@ const handleSubmitAdd = () => {
           <el-table-column label="通用名" min-width="180" prop="commonName" />
           <el-table-column label="分类" min-width="140" prop="category" />
           <el-table-column label="适用症" min-width="140" prop="indications" />
-          <el-table-column label="创建时间" min-width="140" prop="createTime">
+          <el-table-column label="创建时间" min-width="140">
             <template #default="{ row }">
-              {{ row.createTime?.replace('T', ' ') }}
+              {{ row.createTime ? dayjs(row.createTime).format('YYYY-MM-DD HH:mm:ss') : '' }}
             </template>
           </el-table-column>
-          <el-table-column label="更新时间" min-width="140" prop="updateTime">
+          <el-table-column label="更新时间" min-width="140">
             <template #default="{ row }">
-              {{ row.updateTime?.replace('T', ' ') }}
+              {{ row.updateTime ? dayjs(row.updateTime).format('YYYY-MM-DD HH:mm:ss') : '' }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="120" fixed="right">

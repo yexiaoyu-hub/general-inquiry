@@ -81,7 +81,7 @@ const handleHomeClick = () => {
                 <el-avatar :size="50" src="" class="user-avatar" />
                 <div class="user-details">
                   <div class="user-name-dropdown">{{userStore.userinfo.nickname || userStore.userinfo.username}}</div>
-                  <div class="user-phone">{{13888888888}}</div>
+                  <div class="user-phone">{{userStore.userinfo.phone}}</div>
                 </div>
               </div>
               <!-- 底部菜单区域 -->
